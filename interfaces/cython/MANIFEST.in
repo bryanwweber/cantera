@@ -1,0 +1,2 @@
+include **/_cantera.cpp
+include **/_cantera.h
