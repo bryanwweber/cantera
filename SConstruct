@@ -799,10 +799,10 @@ if env['system_sundials'] in ('y','default'):
 if env['blas_lapack_libs'] != '':
     env['blas_lapack_libs'] = env['blas_lapack_libs'].split(',')
     env['use_lapack'] = True
-elif env['OS'] == 'Darwin':
-    env['blas_lapack_libs'] = []
-    env['use_lapack'] = True
-    env.Append(FRAMEWORKS=['Accelerate'])
+# elif env['OS'] == 'Darwin':
+#     env['blas_lapack_libs'] = []
+#     env['use_lapack'] = True
+#     env.Append(FRAMEWORKS=['Accelerate'])
 else:
     env['blas_lapack_libs'] = []
     env['use_lapack'] = False

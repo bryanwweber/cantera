@@ -1,2 +1,3 @@
-include **/_cantera.cpp
-include **/_cantera.h
+include cantera/_cantera.cpp
+include cantera/_cantera.h
+recursive-include cantera *.pyx
