@@ -1228,7 +1228,7 @@ if env['VERBOSE']:
 env['python_cmd_esc'] = quoted(env['python_cmd'])
 
 # Python Package Settings
-python_min_version = parse_version('3.5')
+python_min_version = parse_version('3.6')
 # The string is used to set python_requires in setup.py.in
 env['py_min_ver_str'] = str(python_min_version)
 # Note: cython_min_version is redefined below if the Python version is 3.8 or higher
