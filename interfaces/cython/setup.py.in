@@ -44,12 +44,12 @@ extensions = [
         "cantera._cantera",
         ["cantera/_cantera" + CYTHON_EXT],
         include_dirs=[
-            str(HERE.parent.parent.joinpath("include")),
+            str(HERE.parent.parent.joinpath("include").resolve()),
             numpy.get_include(),
         ],
         libraries=["cantera"],
         library_dirs=[
-            str(HERE.parent.parent.joinpath("build", "lib")),
+            str(HERE.parent.parent.joinpath("build", "lib").resolve()),
         ],
         extra_compile_args=["-std=c++11"],
     ),
