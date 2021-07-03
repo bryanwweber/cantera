@@ -18,7 +18,7 @@ electrolyte solutions, plasmas, and thin film deposition.
 Cantera can be used from Python and Matlab, or in applications written
 in C++ and Fortran 90.
 """
-
+HERE = Path(__file__).parent
 CYTHON_BUILT_FILES = list(p for p in Path("cantera").glob("_cantera.*") if p.suffix in (".h", ".cpp"))
 
 if "--force-cython-compile" in sys.argv:
@@ -44,13 +44,12 @@ extensions = [
         "cantera._cantera",
         ["cantera/_cantera" + CYTHON_EXT],
         include_dirs=[
-            "/Users/bryan/GitHub/cantera/include",
+            str(HERE.parent.parent.joinpath("include")),
             numpy.get_include(),
-            "/opt/homebrew/include",
         ],
         libraries=["cantera"],
         library_dirs=[
-            "/Users/bryan/GitHub/cantera/build/lib",
+            str(HERE.parent.parent.joinpath("build", "lib")),
         ],
         extra_compile_args=["-std=c++11"],
     ),
@@ -61,8 +60,8 @@ setup(
     version="@cantera_version@",
     description="The Cantera Python Interface",
     long_description=long_description,
-    author="Raymond Speth",
-    author_email="speth@mit.edu",
+    author="Cantera Developers",
+    author_email="steering@cantera.org",
     url="https://cantera.org",
     packages=[
         "cantera",

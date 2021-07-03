@@ -1,0 +1,44 @@
+name: Build Python Package
+
+on:
+  push:
+    branches:
+      - add-pypi-package
+
+jobs:
+  ubuntu-multiple-pythons:
+    name: Ubuntu 20.04 with Python ${{ matrix.python-version }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [ '3.6', '3.7', '3.8', '3.9' ]
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout the repository
+      with:
+        submodules: recursive
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: x64
+    - name: Install Apt dependencies
+      run: |
+        sudo apt update
+        sudo apt install libboost-dev gfortran
+    - name: Upgrade pip
+      run: python3 -m pip install -U pip setuptools wheel build
+    - name: Install Python dependencies
+      run: python3 -m pip install scons numpy cython
+    - name: Build Cantera
+      run: python3 `which scons` build -j2 python_package=y
+    - name: Build Distributions
+      run: python3 setup.py bdist_wheel
+      working-directory: interfaces/cython
+    - name: pypi-publish
+      uses: pypa/gh-action-pypi-publish@v1.4.2
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        packages_dir: interfaces/cython/dist
