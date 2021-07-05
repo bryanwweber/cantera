@@ -1,4 +1,5 @@
 import sys
+import os
 from setuptools import setup, Extension
 from pathlib import Path
 import numpy
@@ -18,8 +19,10 @@ electrolyte solutions, plasmas, and thin film deposition.
 Cantera can be used from Python and Matlab, or in applications written
 in C++ and Fortran 90.
 """
-HERE = Path(__file__).parent
-CYTHON_BUILT_FILES = list(p for p in Path("cantera").glob("_cantera.*") if p.suffix in (".h", ".cpp"))
+# This has to be resolved so that parent directories can be found. Relative paths
+# can't go past the cwd
+HERE = Path(__file__).resolve().parent
+CYTHON_BUILT_FILES = [HERE / "cantera" / f"_cantera.{ext}" for ext in ("cpp", "h")]
 
 if "--force-cython-compile" in sys.argv:
     USE_CYTHON = True
@@ -34,23 +37,31 @@ if USE_CYTHON:
     CYTHON_EXT = ".pyx"
     cmdclass = {"build_ext": new_build_ext}
     for p in CYTHON_BUILT_FILES:
-        p.unlink()
+        if p.exists():
+            p.unlink()
 else:
     CYTHON_EXT = ".cpp"
     cmdclass = {}
+
+if os.environ.get("CIBUILDWHEEL"):
+    include_dirs = ["/project/include", numpy.get_include()]
+    library_dirs = ["/project/build/lib"]
+else:
+    include_dirs = [
+        str(HERE.parent.parent.joinpath("include").resolve()),
+        numpy.get_include(),
+    ]
+    library_dirs = [
+        str(HERE.parent.parent.joinpath("build", "lib").resolve()),
+    ]
 
 extensions = [
     Extension(
         "cantera._cantera",
         ["cantera/_cantera" + CYTHON_EXT],
-        include_dirs=[
-            str(HERE.parent.parent.joinpath("include").resolve()),
-            numpy.get_include(),
-        ],
+        include_dirs=include_dirs,
         libraries=["cantera"],
-        library_dirs=[
-            str(HERE.parent.parent.joinpath("build", "lib").resolve()),
-        ],
+        library_dirs=library_dirs,
         extra_compile_args=["-std=c++11"],
     ),
 ]
