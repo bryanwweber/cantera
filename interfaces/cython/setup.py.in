@@ -21,7 +21,15 @@ in C++ and Fortran 90.
 """
 # This has to be resolved so that parent directories can be found. Relative paths
 # can't go past the cwd
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).parent.resolve()
+if "CIBUILDWHEEL" in os.environ and sys.platform == "linux":
+    CT_SRC_ROOT = Path("/project")
+elif "GITHUB_WORKSPACE" in os.environ:
+    CT_SRC_ROOT = Path(os.environ["GITHUB_WORKSPACE"])
+else:
+    CT_SRC_ROOT = HERE.parent.parent.resolve()
+
+print(CT_SRC_ROOT)
 CYTHON_BUILT_FILES = [HERE / "cantera" / f"_cantera.{ext}" for ext in ("cpp", "h")]
 
 if "--force-cython-compile" in sys.argv:
@@ -43,25 +51,13 @@ else:
     CYTHON_EXT = ".cpp"
     cmdclass = {}
 
-if os.environ.get("CIBUILDWHEEL"):
-    include_dirs = ["/project/include", numpy.get_include()]
-    library_dirs = ["/project/build/lib"]
-else:
-    include_dirs = [
-        str(HERE.parent.parent.joinpath("include").resolve()),
-        numpy.get_include(),
-    ]
-    library_dirs = [
-        str(HERE.parent.parent.joinpath("build", "lib").resolve()),
-    ]
-
 extensions = [
     Extension(
         "cantera._cantera",
         ["cantera/_cantera" + CYTHON_EXT],
-        include_dirs=include_dirs,
+        include_dirs=[CT_SRC_ROOT / "include", numpy.get_include()],
         libraries=["cantera"],
-        library_dirs=library_dirs,
+        library_dirs=[CT_SRC_ROOT / "build" / "lib"],
         extra_compile_args=["-std=c++11"],
     ),
 ]
