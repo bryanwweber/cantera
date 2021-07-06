@@ -47,7 +47,7 @@ jobs:
       with:
         platforms: all
     - name: Build wheels
-      uses: pypa/cibuildwheel@main
+      uses: pypa/cibuildwheel@1.12.0
       with:
         package-dir: interfaces/cython
       env:
@@ -60,7 +60,7 @@ jobs:
         CIBW_BEFORE_ALL_WINDOWS: |
           python3 -m pip install scons cython numpy && scons build boost_inc_dir=%BOOST_ROOT% f90_interface=n debug=n googletest=none toolchain=msvc -j2
         CIBW_ARCHS_MACOS: "x86_64"
-        CIBW_ARCHS_LINUX: "auto64 aarch64 ppc64le"
+        CIBW_ARCHS_LINUX: "auto64"
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
 
     - name: Archive the built wheels
