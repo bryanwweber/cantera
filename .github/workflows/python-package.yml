@@ -54,12 +54,17 @@ jobs:
         CIBW_ARCHS_MACOS: "x86_64 arm64"
         CIBW_ARCHS_LINUX: "auto64 aarch64"
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
-    - name: pypi-publish
-      uses: pypa/gh-action-pypi-publish@release/v1
+
+    - name: Archive the built wheels
+      uses: actions/upload-artifact@v2
       with:
-        user: __token__
-        password: ${{ secrets.TEST_PYPI_TOKEN }}
-        packages_dir: wheelhouse/
-        repository_url: https://test.pypi.org/legacy/
-        # Ignore existing packages as long as we're uploading to TestPyPI
-        skip_existing: true
+        path: ./wheelhouse/*.whl
+    # - name: pypi-publish
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     user: __token__
+    #     password: ${{ secrets.TEST_PYPI_TOKEN }}
+    #     packages_dir: wheelhouse/
+    #     repository_url: https://test.pypi.org/legacy/
+    #     # Ignore existing packages as long as we're uploading to TestPyPI
+    #     skip_existing: true
