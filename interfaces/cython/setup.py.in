@@ -51,14 +51,21 @@ else:
     CYTHON_EXT = ".cpp"
     cmdclass = {}
 
+include_dirs = [str(CT_SRC_ROOT / "include"), numpy.get_include()]
+if sys.platform != "win32":
+    extra_compile_args = ["-std=c++11"]
+else:
+    extra_compile_args = []
+    include_dirs.append("%BOOST_ROOT%")
+
 extensions = [
     Extension(
         "cantera._cantera",
         ["cantera/_cantera" + CYTHON_EXT],
-        include_dirs=[str(CT_SRC_ROOT / "include"), numpy.get_include()],
+        include_dirs=include_dirs,
         libraries=["cantera"],
         library_dirs=[str(CT_SRC_ROOT / "build" / "lib")],
-        extra_compile_args=["-std=c++11"],
+        extra_compile_args=extra_compile_args,
     ),
 ]
 
