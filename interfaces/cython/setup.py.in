@@ -29,7 +29,6 @@ elif "GITHUB_WORKSPACE" in os.environ:
 else:
     CT_SRC_ROOT = HERE.parent.parent.resolve()
 
-print(CT_SRC_ROOT)
 CYTHON_BUILT_FILES = [HERE / "cantera" / f"_cantera.{ext}" for ext in ("cpp", "h")]
 
 if "--force-cython-compile" in sys.argv:
@@ -56,7 +55,7 @@ if sys.platform != "win32":
     extra_compile_args = ["-std=c++11"]
 else:
     extra_compile_args = []
-    include_dirs.append("%BOOST_ROOT%")
+    include_dirs.append(str(os.environ["BOOST_ROOT"]))
 
 extensions = [
     Extension(
