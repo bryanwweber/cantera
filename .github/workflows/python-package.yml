@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2019, ubuntu-20.04, macos-10.15]
+      fail-fast: false
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
       BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
@@ -49,7 +50,7 @@ jobs:
         CIBW_SKIP: "*-win32 *-manylinux_i686"
         CIBW_BEFORE_ALL_LINUX: "yum install -y boost-devel && python -m pip install scons cython numpy && python `which scons` build -j2"
         CIBW_BEFORE_ALL_MACOS: "python3 -m pip install scons cython numpy && python3 `which scons` build -j2"
-        CIBW_BEFORE_ALL_WINDOWS: "python3 -m pip install scons cython numpy && scons build boost_inc_dir=%BOOST_ROOT% -j2"
+        CIBW_BEFORE_ALL_WINDOWS: "python3 -m pip install scons cython numpy && scons build boost_inc_dir=%BOOST_ROOT% f90_interface=n -j2"
         CIBW_ARCHS_MACOS: "x86_64 arm64"
         CIBW_ARCHS_LINUX: "auto64 aarch64"
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
