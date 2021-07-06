@@ -326,13 +326,11 @@ if env['OS'] in ('Windows', 'Darwin'):
 else:
     defaults.threadFlags = '-pthread'
 
-# InstallVersionedLib only fully functional in SCons >= 2.4.0
-# SHLIBVERSION fails with MinGW: http://scons.tigris.org/issues/show_bug.cgi?id=3035
-if (env['toolchain'] == 'mingw'
-    or parse_version(SCons.__version__) < parse_version('2.4.0')):
-    defaults.versionedSharedLibrary = False
+# SHLIBVERSION fails with MinGW: https://github.com/SCons/scons/issues/3035
+if env["toolchain"] == "mingw":
+    defaults.versioned_shared_library = False
 else:
-    defaults.versionedSharedLibrary = True
+    defaults.versioned_shared_library = True
 
 defaults.fsLayout = 'compact' if env['OS'] == 'Windows' else 'standard'
 defaults.env_vars = 'PATH,LD_LIBRARY_PATH,PYTHONPATH'
@@ -644,7 +642,7 @@ config_options = [
            actual library and 'libcantera_shared.so' and 'libcantera_shared.so.2'
            as symlinks.
            """,
-        defaults.versionedSharedLibrary),
+        defaults.versioned_shared_library),
     BoolVariable(
         'use_rpath_linkage',
         """If enabled, link to all shared libraries using 'rpath', i.e., a fixed
