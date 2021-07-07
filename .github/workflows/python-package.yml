@@ -99,9 +99,12 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         path: ./wheelhouse/*.whl
-  macos-wheel:
-    name: Build Wheels on macOS
+
+  macos-intel-wheel:
+    name: Build Wheels on macOS Intel
     runs-on: macos-10.15
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
     - uses: actions/checkout@v2
       name: Checkout the repository
@@ -114,19 +117,56 @@ jobs:
       with:
         package-dir: interfaces/cython
       env:
-        CIBW_BUILD: cp37-* cp38-* cp39-*
+        CIBW_BUILD: cp3*-*
         CIBW_BEFORE_ALL_MACOS: |
-          `which python` -V &&\
-          `which python3` -V &&\
           sudo -H /usr/local/bin/python3 -m pip install scons cython numpy &&\
           /usr/local/bin/python3 `which scons` build debug=n f90_interface=n googletest=none -j3
-        CIBW_ARCHS_MACOS: "x86_64"
+        CIBW_ARCHS: "x86_64"
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
 
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
       with:
         path: ./wheelhouse/*.whl
+
+  macos-arm-wheel:
+    name: Build Wheels for macOS arm64
+    runs-on: macos-10.15
+    env:
+      SDKROOT: "macosx11.0"
+      _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+      ARCHFLAGS: "-arch arm64"
+      MACOSX_DEPLOYMENT_TARGET: "10.9"
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout the repository
+      with:
+        submodules: recursive
+    - name: Install Brew dependencies
+      run: brew install boost
+    - name: Set Up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Update pip
+      run: python -m pip install -U pip setuptools
+    - name: Install CIBuildWheel
+      run: python -m pip install cibuildwheel==1.12.0 scons numpy cython
+    - name: Build the base package
+      run: |
+        python `which scons` build boost_inc_dir=$(brew --prefix)/include f90_interface=n debug=n googletest=none -j2
+    - name: Build the wheels
+      run: |
+        python -m cibuildwheel interfaces/cython
+      env:
+        CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
+        CIBW_ARCHS: "arm64"
+        CIBW_BUILD: cp3*-*
+    - name: Archive the built wheels
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./wheelhouse/*.whl
+
     # - name: pypi-publish
     #   uses: pypa/gh-action-pypi-publish@release/v1
     #   with:
