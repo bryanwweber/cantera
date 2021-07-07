@@ -92,6 +92,7 @@ jobs:
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
         CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
         CIBW_BUILD: cp3*-*
+        CIBW_SKIP: cp35-*
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
       with:
@@ -115,7 +116,9 @@ jobs:
         package-dir: interfaces/cython
       env:
         CIBW_BUILD: cp3*-*
+        CIBW_SKIP: cp35-*
         CIBW_BEFORE_ALL_MACOS: |
+          sudo -H /usr/local/bin/python3 -m pip install -U pip setuptools &&\
           sudo -H /usr/local/bin/python3 -m pip install scons cython numpy &&\
           /usr/local/bin/python3 `which scons` build debug=n f90_interface=n googletest=none -j3
         CIBW_ARCHS: "x86_64"
@@ -134,7 +137,7 @@ jobs:
       _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
       ARCHFLAGS: "-arch arm64"
       MACOSX_DEPLOYMENT_TARGET: "10.9"
-      DEVELOPER_DIR: /Applications/Xcode_12.2.app/Contents/Developer
+      DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
     steps:
     - uses: actions/checkout@v2
       name: Checkout the repository
@@ -160,6 +163,7 @@ jobs:
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
         CIBW_ARCHS: "arm64"
         CIBW_BUILD: cp3*-*
+        CIBW_SKIP: cp35-*
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
       with:
