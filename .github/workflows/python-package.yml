@@ -28,7 +28,7 @@ jobs:
         package-dir: interfaces/cython
       env:
         CIBW_BUILD: cp3*-*
-        CIBW_SKIP: "*-manylinux_i686"
+        CIBW_SKIP: "*-manylinux_i686 cp35-*"
         CIBW_BEFORE_ALL: |
           yum install -y boost-devel &&\
           python -m pip install scons cython numpy &&\
