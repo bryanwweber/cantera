@@ -9,6 +9,10 @@ jobs:
   ubuntu-wheel:
     name: Build Wheels on Ubuntu-20.04
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        CIBW_ARCH: ["auto64", "aarch64", "ppc64le"]
+      fail-fast: false
     steps:
     - uses: actions/checkout@v2
       name: Checkout the repository
@@ -23,13 +27,13 @@ jobs:
       with:
         package-dir: interfaces/cython
       env:
-        CIBW_BUILD: cp36-* cp37-* cp38-* cp39-*
+        CIBW_BUILD: cp3*-
         CIBW_SKIP: "*-manylinux_i686"
-        CIBW_BEFORE_ALL_LINUX: |
+        CIBW_BEFORE_ALL: |
           yum install -y boost-devel &&\
           python -m pip install scons cython numpy &&\
           python `which scons` build f90_interface=n debug=n googletest=none -j2
-        CIBW_ARCHS_LINUX: "auto64 aarch64 ppc64le"
+        CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
 
     - name: Archive the built wheels
@@ -90,6 +94,7 @@ jobs:
       env:
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
         CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
+        CIBW_BUILD: cp-3*
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
       with:
@@ -111,10 +116,10 @@ jobs:
       env:
         CIBW_BUILD: cp37-* cp38-* cp39-*
         CIBW_BEFORE_ALL_MACOS: |
-          which python &&\
-          which python3 &&\
-          python3 -m pip install scons cython numpy &&\
-          python3 `which scons` build debug=n f90_interface=n googletest=none -j3
+          `which python` -V &&\
+          `which python3` -V &&\
+          sudo -H /usr/local/bin/python3 -m pip install scons cython numpy &&\
+          /usr/local/bin/python3 `which scons` build debug=n f90_interface=n googletest=none -j3
         CIBW_ARCHS_MACOS: "x86_64"
         CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
 
