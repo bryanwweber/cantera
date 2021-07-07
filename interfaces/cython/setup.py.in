@@ -19,6 +19,7 @@ electrolyte solutions, plasmas, and thin film deposition.
 Cantera can be used from Python and Matlab, or in applications written
 in C++ and Fortran 90.
 """
+
 # This has to be resolved so that parent directories can be found. Relative paths
 # can't go past the cwd
 HERE = Path(__file__).parent.resolve()
@@ -50,11 +51,13 @@ else:
     CYTHON_EXT = ".cpp"
     cmdclass = {}
 
-include_dirs = [str(CT_SRC_ROOT / "include"), numpy.get_include()]
 if sys.platform != "win32":
     extra_compile_args = ["-std=c++11"]
 else:
     extra_compile_args = []
+
+include_dirs = [str(CT_SRC_ROOT / "include"), numpy.get_include()]
+if "BOOST_ROOT" in os.environ:
     include_dirs.append(str(os.environ["BOOST_ROOT"]))
 
 extensions = [
