@@ -137,6 +137,7 @@ jobs:
       _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
       ARCHFLAGS: "-arch arm64"
       MACOSX_DEPLOYMENT_TARGET: "10.9"
+      DEVELOPER_DIR: /Applications/Xcode_12.2.app/Contents/Developer
     steps:
     - uses: actions/checkout@v2
       name: Checkout the repository
