@@ -1,0 +1,9 @@
+cantera/
+ext/
+src/
+include/
+pyproject.toml
+setup.cfg
+Cantera.egg-info/
+build/
+dist/

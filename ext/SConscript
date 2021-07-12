@@ -1,3 +1,4 @@
+from pathlib import Path
 from buildutils import *
 
 Import('env', 'build', 'install', 'libraryTargets')
@@ -129,8 +130,8 @@ def generate_license(target, source, env):
     tpl = stars + 'The following license applies to {}\n' + stars + '\n{}\n'
 
     license = []
-    for (package,_),filename in zip(license_files, source):
-        license.append(tpl.format(package, open(filename.path).read().strip()))
+    for (package, _), filename in zip(license_files, source):
+        license.append(tpl.format(package, Path(filename.path).read_text().strip()))
 
     license = '\n'.join(license)
     if target[0].path.endswith('.rtf'):
@@ -138,7 +139,8 @@ def generate_license(target, source, env):
         license = license.replace('\n', ' \\par\n')
         license = r'{\rtf1\ansi{\fonttbl\f0\fswiss Arial;}\f0\pard\fs16 ' + license + '}'
 
-    open(target[0].path, 'w').write(license)
+    Path(target[0].path).write_text(license)
+
 
 license = build(localenv.Command('LICENSE.txt', [x[1] for x in license_files],
                                  generate_license))

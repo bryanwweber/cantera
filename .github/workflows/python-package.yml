@@ -6,8 +6,8 @@ on:
       - add-pypi-package
 
 jobs:
-  ubuntu-wheel:
-    name: Build Wheels on Ubuntu-20.04
+  manylinux-wheel:
+    name: Build Manylinux Wheels in Docker on Ubuntu-20.04
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -169,12 +169,20 @@ jobs:
       with:
         path: ./wheelhouse/*.whl
 
-    # - name: pypi-publish
-    #   uses: pypa/gh-action-pypi-publish@release/v1
-    #   with:
-    #     user: __token__
-    #     password: ${{ secrets.TEST_PYPI_TOKEN }}
-    #     packages_dir: wheelhouse/
-    #     repository_url: https://test.pypi.org/legacy/
-    #     # Ignore existing packages as long as we're uploading to TestPyPI
-    #     skip_existing: true
+  publish-wheels-to-pypi:
+    name: Publish wheel files to PyPI
+    runs-on: ubuntu-20.04
+    needs: ["manylinux-wheel", "windows-wheel", "macos-intel-wheel", "macos-arm-wheel"]
+    steps:
+    - name: Download pre-built wheels
+      uses: actions/download-artifact@v2
+      with:
+        path: dist/
+    - name: pypi-publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        user: __token__
+        password: ${{ secrets.TEST_PYPI_TOKEN }}
+        repository_url: https://test.pypi.org/legacy/
+        # Ignore existing packages as long as we're uploading to TestPyPI
+        skip_existing: true

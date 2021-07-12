@@ -1,0 +1,202 @@
+"""SDist of the Python Module
+
+TODO:
+~1. Figure out missing boost headers~
+~2. The missing header was found by running python -m build in the python_sdist directory~
+~3. Switch to setup.cfg~
+~4. Set up LICENSE and README for PyPI~
+~5. Add extra links for PyPI to setup.cfg~
+6. Decide whether or not to build wheels from the sdist (leaning towards yes)
+7. Figure out how to build just the sdist in SCons without compiling everything else
+"""
+from pathlib import Path
+import shutil
+import re
+
+Import("env", "build", "install")
+
+localenv = env.Clone()
+
+# Use Dir to ensure that #folder points to the
+# root of the source folder
+CT_SRC_ROOT = Path(Dir("#src").abspath)
+CT_INC_ROOT = Path(Dir("#include").abspath)
+CT_INT_ROOT = Path(Dir("#interfaces").abspath)
+EXT_ROOT = Path(Dir("#ext").abspath)
+SDIST_ROOT = Path(Dir(".").abspath)
+
+
+def copy_src(target, source, env):
+    target = Path(target[0].abspath)
+    source = Path(source[0].abspath)
+    if target.is_dir():
+        shutil.rmtree(target)
+    for subdir in source.iterdir():
+        if not subdir.is_dir() or subdir.name in ("fortran", "matlab"):
+            continue
+        shutil.copytree(subdir, target / subdir.name)
+    # Avoid having to set a C preprocessor define at compile time, since
+    # the git commit is unknown from the sdist
+    global_cpp = target / "base" / "global.cpp"
+    git_commit_replaced = re.sub("#ifdef GIT_COMMIT.*#endif",
+                                 f"""    return "{env['git_commit']}";""",
+                                 global_cpp.read_text(),
+                                 flags=re.DOTALL)
+    global_cpp.write_text(git_commit_replaced)
+
+
+def copy_include(target, source, env):
+    target = Path(target[0].abspath)
+    source = Path(source[0].abspath)
+    if target.is_dir():
+        shutil.rmtree(target)
+    ignores = shutil.ignore_patterns("*.in")
+    for subdir in source.iterdir():
+        if not subdir.is_dir() or subdir.name == "ext":
+            continue
+        shutil.copytree(subdir, target / subdir.name, ignore=ignores)
+
+
+def copy_ext_src(target, source, env):
+    local_ext = Path(target[0].abspath)
+    source_ext = Path(source[0].abspath)
+    if local_ext.is_dir():
+        shutil.rmtree(local_ext)
+
+    # fmt library
+    FMT_ROOT = local_ext / "fmt"
+    FMT_ROOT.mkdir(parents=True)  # Needed to be able to use copy2
+    for cc_file in (source_ext / "fmt" / "src").glob("*.cc"):
+        shutil.copy2(cc_file, FMT_ROOT)
+    shutil.copytree(source_ext / "fmt" / "include" / "fmt", FMT_ROOT / "fmt")
+
+    # libexecstream
+    EXECSTREAM_ROOT = local_ext / "libexecstream"
+    EXECSTREAM_ROOT.mkdir(parents=True)  # Needed to be able to use copy2
+    shutil.copy2(source_ext / "libexecstream" / "exec-stream.cpp", EXECSTREAM_ROOT)
+    shutil.copy2(source_ext / "libexecstream" / "exec-stream.h", EXECSTREAM_ROOT)
+    shutil.copytree(source_ext / "libexecstream" / "win", EXECSTREAM_ROOT / "win")
+    shutil.copytree(source_ext / "libexecstream" / "posix", EXECSTREAM_ROOT / "posix")
+
+    # yaml-cpp library
+    YAML_ROOT = local_ext / "yaml-cpp"
+    shutil.copytree(source_ext / "yaml-cpp" / "src", YAML_ROOT)
+    shutil.copytree(source_ext / "yaml-cpp" / "include" / "yaml-cpp", YAML_ROOT / "yaml-cpp")
+
+    # SUNDIALS library
+    SUNDIALS_ROOT = local_ext / "sundials"
+    subdirs = ["sundials", "nvector/serial", "cvodes", "ida", "sunmatrix/band",
+               "sunmatrix/dense", "sunmatrix/sparse", "sunlinsol/dense",
+               "sunlinsol/band", "sunlinsol/spgmr", "sunnonlinsol/newton"]
+    ignores = shutil.ignore_patterns("fsun*", "CMake*", "fmod", "fcmix")
+    for subdir in subdirs:
+        shutil.copytree(
+            source_ext / "sundials" / "src" / subdir,
+            SUNDIALS_ROOT / subdir,
+            ignore=ignores,
+        )
+    # Copy the minimal Sundials configuration template into the sdist so that
+    # it can be filled in at compile time on the user's machine
+    shutil.copy2(source_ext / "sundials_config.h.in", SDIST_ROOT)
+
+
+def copy_ext_include(target, source, env):
+    local_ext = Path(target[0].abspath)
+    source_ext = Path(source[0].abspath)
+    if local_ext.is_dir():
+        shutil.rmtree(local_ext)
+
+    # fmt headers
+    (local_ext / "fmt").mkdir(parents=True, exist_ok=True)
+    for name in ("format.h", "ostream.h", "printf.h", "core.h", "format-inl.h"):
+        shutil.copy2(
+            source_ext / "fmt" / "include" / "fmt" / name,
+            local_ext / "fmt",
+        )
+
+    # yaml-cpp headers
+    shutil.copytree(
+        source_ext / "yaml-cpp" / "include" / "yaml-cpp",
+        local_ext / "yaml-cpp",
+    )
+
+    # SUNDIALS headers
+    for subdir in ("sundials", "nvector", "cvodes", "ida", "sunmatrix", "sunlinsol", "sunnonlinsol"):
+        shutil.copytree(
+            source_ext / "sundials" / "include" / subdir,
+            local_ext / subdir,
+            ignore=shutil.ignore_patterns("*.in"),
+        )
+
+    # Eigen headers
+    shutil.copytree(
+        source_ext / "eigen" / "Eigen",
+        local_ext / "Eigen",
+    )
+
+
+build(localenv.Command("src", "#src", copy_src))
+include_target = build(localenv.Command("include", "#include", copy_include))
+localenv.Depends(include_target, env["config_h_target"])
+build(localenv.Command("ext", "#ext", copy_ext_src))
+ext_include_target = build(localenv.Command("include/cantera/ext", "#ext", copy_ext_include))
+localenv.Depends(ext_include_target, include_target)
+# Break the dependency cycle introduced because the ext include files
+# are copied separately
+localenv.Ignore("include/cantera/ext", include_target)
+
+
+def copy_cantera_interface(target, source, env):
+    target = Path(target[0].abspath) / "cantera"
+    source = Path(source[0].abspath)
+    if target.is_dir():
+        shutil.rmtree(target)
+    ignores = shutil.ignore_patterns("__pycache__")
+    shutil.copytree(source / "cantera", target / "cantera", ignore=ignores)
+    shutil.copy2(source / "pyproject.toml", target)
+
+build(localenv.Command(".", "#interfaces/cython", copy_cantera_interface))
+
+build(localenv.SubstFile("setup.cfg", "setup.cfg.in"))
+
+
+def copy_data_files(target, source, env):
+    main_data = Path(target[0].abspath) / "data"
+    test_data = Path(target[0].abspath) / "test" / "data"
+    source_main_data = Path(source[0].abspath)
+    test_main_data = Path(source[1].abspath)
+    shutil.copytree(
+        source_main_data, main_data, ignore=shutil.ignore_patterns("inputs")
+    )
+    shutil.copytree(test_main_data, test_data)
+
+
+build(localenv.Command("cantera", ["#data", "#test/data"], copy_data_files))
+build(localenv.Command("README.rst", "#README.rst", Copy("$TARGET", "$SOURCE")))
+
+
+def generate_license(target, source, env):
+    target = Path(str(target[0]))
+    stars = "*"*50 + "\n" + "*"*50 + "\n"
+    tpl = stars + "The following license applies to {}\n" + stars + "\n{}\n"
+
+    license = []
+    for package, license_file in env["license_files"].items():
+        license_file = Path(File(license_file).abspath)
+        license.append(tpl.format(package, license_file.read_text().strip()))
+
+    license = "\n".join(license)
+    target.write_text(license)
+
+
+license_files = {
+    "Cantera": "#License.txt",
+    "Libexecstream": "#ext/libexecstream/doc/license.txt",
+    "fmtlib": "#ext/fmt/LICENSE.rst",
+    "Sundials": "#ext/sundials/LICENSE",
+    "YAML-CPP": "#ext/yaml-cpp/LICENSE",
+    "Eigen": "#ext/eigen/COPYING.MPL2",
+}
+localenv["license_files"] = license_files
+
+build(localenv.Command("LICENSE.txt", license_files.values(), generate_license))
