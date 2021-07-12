@@ -109,7 +109,6 @@ extensions = cythonize([
         include_dirs=include_dirs,
         extra_compile_args=extra_compile_args,
         language="c++",
-        define_macros=[("GIT_COMMIT", '"789354a14"')],
     ),
 ])
 

@@ -152,7 +152,7 @@ def copy_cantera_interface(target, source, env):
     if target.is_dir():
         shutil.rmtree(target)
     ignores = shutil.ignore_patterns("__pycache__")
-    shutil.copytree(source / "cantera", target / "cantera", ignore=ignores)
+    shutil.copytree(source / "cantera", target, ignore=ignores)
     shutil.copy2(source / "pyproject.toml", target)
 
 build(localenv.Command(".", "#interfaces/cython", copy_cantera_interface))

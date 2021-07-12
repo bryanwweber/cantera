@@ -6,183 +6,212 @@ on:
       - add-pypi-package
 
 jobs:
-  manylinux-wheel:
-    name: Build Manylinux Wheels in Docker on Ubuntu-20.04
+  sdist:
+    name: Build the sdist
     runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
-      name: Checkout the repository
-      with:
-        submodules: recursive
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-      with:
-        platforms: all
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v1.12.0
-      with:
-        package-dir: interfaces/cython
-      env:
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: "cp35-*"
-        CIBW_BEFORE_ALL: |
-          yum install -y boost-devel &&\
-          python -m pip install -U pip setuptools &&\
-          python -m pip install scons cython numpy &&\
-          python `which scons` build f90_interface=n debug=n googletest=none -j2
-        CIBW_ARCHS: "auto64"
-        CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
-
-    - name: Archive the built wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: ./wheelhouse/*.whl
-
-  windows-wheel:
-    name: Build Wheels on Windows
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        include:
-        - py-arch: 'x86'
-          CIBW_ARCH: 'x86'
-        - py-arch: 'x64'
-          CIBW_ARCH: 'AMD64'
-      fail-fast: false
-    env:
-      BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
-      BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
-    steps:
-    - uses: actions/checkout@v2
-      name: Checkout the repository
-      with:
-        submodules: recursive
-    - name: Restore Boost cache
-      uses: actions/cache@v2
-      id: cache-boost
-      with:
-        path: ${{env.BOOST_ROOT}}
-        key: boost
-    - name: Install Boost Headers
-      if: steps.cache-boost.outputs.cache-hit != 'true' && runner.os == 'Windows'
+    - name: Install dependencies
       run: |
-        BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
-        mkdir -p $BOOST_ROOT
-        curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
-        7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_75_0/boost
-        mv $BOOST_ROOT/boost_1_75_0/boost $BOOST_ROOT/boost
-        rm $BOOST_ROOT/download.7z
-      shell: bash
+        sudo apt update
+        sudo apt install libboost-dev
+    - uses: actions/checkout@v2
+      name: Checkout the repository
+      with:
+        submodules: recursive
     - name: Set Up Python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
         architecture: ${{ matrix.py-arch }}
     - name: Update pip
-      run: python -m pip install -U pip setuptools
-    - name: Install CIBuildWheel
-      run: python -m pip install cibuildwheel==1.12.0 scons pypiwin32 numpy cython
-    - name: Build the base package
-      run: |
-        scons build boost_inc_dir=%BOOST_ROOT% f90_interface=n debug=n googletest=none toolchain=msvc -j2
-    - name: Build the wheels
-      run: |
-        python -m cibuildwheel interfaces/cython
-      env:
-        CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
-        CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: cp35-*
-    - name: Archive the built wheels
+      run: python3 -m pip install -U pip setuptools
+    - name: Install dependencies
+      run: python3 -m pip install scons numpy cython build
+    - name: Build the interface
+      run: python3 `which scons` build f90_interface=n debug=n googletest=none python_package=sdist -j2
+    - name: Build the sdist
+      run: python3 -m build -s
+      working-directory: interfaces/python_sdist
+    - name: Archive the built sdist
       uses: actions/upload-artifact@v2
       with:
-        path: ./wheelhouse/*.whl
+        path: ./interfaces/python_sdist/dist/*.tar.gz
+        name: sdist
+        if-no-files-found: error
 
-  macos-intel-wheel:
-    name: Build Wheels on macOS Intel
-    runs-on: macos-10.15
-    env:
-      MACOSX_DEPLOYMENT_TARGET: 10.9
-    steps:
-    - uses: actions/checkout@v2
-      name: Checkout the repository
-      with:
-        submodules: recursive
-    - name: Install Brew dependencies
-      run: brew install boost
-    - name: Build wheels
-      uses: pypa/cibuildwheel@v1.12.0
-      with:
-        package-dir: interfaces/cython
-      env:
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: cp35-*
-        CIBW_BEFORE_ALL_MACOS: |
-          sudo -H /usr/local/bin/python3 -m pip install -U pip setuptools &&\
-          sudo -H /usr/local/bin/python3 -m pip install scons cython numpy &&\
-          /usr/local/bin/python3 `which scons` build debug=n f90_interface=n googletest=none -j3
-        CIBW_ARCHS: "x86_64"
-        CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
-
-    - name: Archive the built wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: ./wheelhouse/*.whl
-
-  macos-arm-wheel:
-    name: Build Wheels for macOS arm64
-    runs-on: macos-10.15
-    env:
-      SDKROOT: "macosx11.0"
-      _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
-      ARCHFLAGS: "-arch arm64"
-      MACOSX_DEPLOYMENT_TARGET: "10.9"
-      DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
-    steps:
-    - uses: actions/checkout@v2
-      name: Checkout the repository
-      with:
-        submodules: recursive
-    - name: Install Brew dependencies
-      run: brew install boost
-    - name: Set Up Python 3.8
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-    - name: Update pip
-      run: python -m pip install -U pip setuptools
-    - name: Install CIBuildWheel
-      run: python -m pip install cibuildwheel==1.12.0 scons numpy cython
-    - name: Build the base package
-      run: |
-        python `which scons` build boost_inc_dir=$(brew --prefix)/include f90_interface=n debug=n googletest=none env_vars=all -j2
-    - name: Build the wheels
-      run: |
-        python -m cibuildwheel interfaces/cython
-      env:
-        CIBW_ENVIRONMENT: 'GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT="$(brew --prefix)/include"'
-        CIBW_ARCHS: "arm64"
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: cp35-*
-    - name: Archive the built wheels
-      uses: actions/upload-artifact@v2
-      with:
-        path: ./wheelhouse/*.whl
-
-  publish-wheels-to-pypi:
-    name: Publish wheel files to PyPI
+  manylinux-wheel:
+    name: Build Manylinux Wheels in Docker on Ubuntu-20.04
     runs-on: ubuntu-20.04
-    needs: ["manylinux-wheel", "windows-wheel", "macos-intel-wheel", "macos-arm-wheel"]
+    needs: [sdist]
     steps:
     - name: Download pre-built wheels
       uses: actions/download-artifact@v2
       with:
-        path: dist/
-    - name: pypi-publish
-      uses: pypa/gh-action-pypi-publish@release/v1
+        name: sdist
+    - name: Extract the sdist tarball
+      run: tar -xvf *.tar.gz --strip-components=1
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
       with:
-        user: __token__
-        password: ${{ secrets.TEST_PYPI_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
-        # Ignore existing packages as long as we're uploading to TestPyPI
-        skip_existing: true
+        platforms: all
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v1.12.0
+      env:
+        CIBW_BUILD: cp3*-*
+        CIBW_SKIP: "cp35-*"
+        CIBW_BEFORE_ALL: yum install -y boost-devel
+        CIBW_ARCHS: "auto64"
+
+    - name: Archive the built wheels
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./wheelhouse/*.whl
+
+  # windows-wheel:
+  #   name: Build Wheels on Windows
+  #   runs-on: windows-2019
+  #   strategy:
+  #     matrix:
+  #       include:
+  #       - py-arch: 'x86'
+  #         CIBW_ARCH: 'x86'
+  #       - py-arch: 'x64'
+  #         CIBW_ARCH: 'AMD64'
+  #     fail-fast: false
+  #   env:
+  #     BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
+  #     BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     name: Checkout the repository
+  #     with:
+  #       submodules: recursive
+  #   - name: Restore Boost cache
+  #     uses: actions/cache@v2
+  #     id: cache-boost
+  #     with:
+  #       path: ${{env.BOOST_ROOT}}
+  #       key: boost
+  #   - name: Install Boost Headers
+  #     if: steps.cache-boost.outputs.cache-hit != 'true' && runner.os == 'Windows'
+  #     run: |
+  #       BOOST_ROOT=$(echo $BOOST_ROOT | sed 's/\\/\//g')
+  #       mkdir -p $BOOST_ROOT
+  #       curl --progress-bar --location --output $BOOST_ROOT/download.7z $BOOST_URL
+  #       7z -o$BOOST_ROOT x $BOOST_ROOT/download.7z -y -bd boost_1_75_0/boost
+  #       mv $BOOST_ROOT/boost_1_75_0/boost $BOOST_ROOT/boost
+  #       rm $BOOST_ROOT/download.7z
+  #     shell: bash
+  #   - name: Set Up Python 3.8
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: '3.8'
+  #       architecture: ${{ matrix.py-arch }}
+  #   - name: Update pip
+  #     run: python -m pip install -U pip setuptools
+  #   - name: Install CIBuildWheel
+  #     run: python -m pip install cibuildwheel==1.12.0 scons pypiwin32 numpy cython
+  #   - name: Build the base package
+  #     run: |
+  #       scons build boost_inc_dir=%BOOST_ROOT% f90_interface=n debug=n googletest=none toolchain=msvc -j2
+  #   - name: Build the wheels
+  #     run: |
+  #       python -m cibuildwheel interfaces/cython
+  #     env:
+  #       CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT=${BOOST_ROOT}"
+  #       CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
+  #       CIBW_BUILD: cp3*-*
+  #       CIBW_SKIP: cp35-*
+  #   - name: Archive the built wheels
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       path: ./wheelhouse/*.whl
+
+  # macos-intel-wheel:
+  #   name: Build Wheels on macOS Intel
+  #   runs-on: macos-10.15
+  #   env:
+  #     MACOSX_DEPLOYMENT_TARGET: 10.9
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     name: Checkout the repository
+  #     with:
+  #       submodules: recursive
+  #   - name: Install Brew dependencies
+  #     run: brew install boost
+  #   - name: Build wheels
+  #     uses: pypa/cibuildwheel@v1.12.0
+  #     with:
+  #       package-dir: interfaces/cython
+  #     env:
+  #       CIBW_BUILD: cp3*-*
+  #       CIBW_SKIP: cp35-*
+  #       CIBW_BEFORE_ALL_MACOS: |
+  #         sudo -H /usr/local/bin/python3 -m pip install -U pip setuptools &&\
+  #         sudo -H /usr/local/bin/python3 -m pip install scons cython numpy &&\
+  #         /usr/local/bin/python3 `which scons` build debug=n f90_interface=n googletest=none -j3
+  #       CIBW_ARCHS: "x86_64"
+  #       CIBW_ENVIRONMENT: "GITHUB_WORKSPACE=${GITHUB_WORKSPACE}"
+
+  #   - name: Archive the built wheels
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       path: ./wheelhouse/*.whl
+
+  # macos-arm-wheel:
+  #   name: Build Wheels for macOS arm64
+  #   runs-on: macos-10.15
+  #   env:
+  #     SDKROOT: "macosx11.0"
+  #     _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
+  #     ARCHFLAGS: "-arch arm64"
+  #     MACOSX_DEPLOYMENT_TARGET: "10.9"
+  #     DEVELOPER_DIR: "/Applications/Xcode_12.2.app/Contents/Developer"
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     name: Checkout the repository
+  #     with:
+  #       submodules: recursive
+  #   - name: Install Brew dependencies
+  #     run: brew install boost
+  #   - name: Set Up Python 3.8
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: '3.8'
+  #   - name: Update pip
+  #     run: python -m pip install -U pip setuptools
+  #   - name: Install CIBuildWheel
+  #     run: python -m pip install cibuildwheel==1.12.0 scons numpy cython
+  #   - name: Build the base package
+  #     run: |
+  #       python `which scons` build boost_inc_dir=$(brew --prefix)/include f90_interface=n debug=n googletest=none env_vars=all -j2
+  #   - name: Build the wheels
+  #     run: |
+  #       python -m cibuildwheel interfaces/cython
+  #     env:
+  #       CIBW_ENVIRONMENT: 'GITHUB_WORKSPACE=${GITHUB_WORKSPACE} BOOST_ROOT="$(brew --prefix)/include"'
+  #       CIBW_ARCHS: "arm64"
+  #       CIBW_BUILD: cp3*-*
+  #       CIBW_SKIP: cp35-*
+  #   - name: Archive the built wheels
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       path: ./wheelhouse/*.whl
+
+  # publish-wheels-to-pypi:
+  #   name: Publish wheel files to PyPI
+  #   runs-on: ubuntu-20.04
+  #   needs: ["manylinux-wheel", "windows-wheel", "macos-intel-wheel", "macos-arm-wheel"]
+  #   steps:
+  #   - name: Download pre-built wheels
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       path: dist/
+  #   - name: pypi-publish
+  #     uses: pypa/gh-action-pypi-publish@release/v1
+  #     with:
+  #       user: __token__
+  #       password: ${{ secrets.TEST_PYPI_TOKEN }}
+  #       repository_url: https://test.pypi.org/legacy/
+  #       # Ignore existing packages as long as we're uploading to TestPyPI
+  #       skip_existing: true
