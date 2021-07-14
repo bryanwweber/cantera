@@ -2,3 +2,4 @@ include cantera/_cantera.cpp
 include cantera/_cantera.h
 recursive-include cantera *.pyx
 include sundials_config.h.in
+graft include
