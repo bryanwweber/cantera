@@ -22,13 +22,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
-        architecture: ${{ matrix.py-arch }}
     - name: Update pip
       run: python3 -m pip install -U pip setuptools
     - name: Install dependencies
       run: python3 -m pip install scons numpy cython build
     - name: Build the interface
-      run: python3 `which scons` build f90_interface=n debug=n googletest=none python_package=sdist -j2
+      run: python3 `which scons` build f90_interface=n debug=n googletest=none python_package=sdist
     - name: Build the sdist
       run: python3 -m build -s
       working-directory: interfaces/python_sdist
