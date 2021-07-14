@@ -5,3 +5,5 @@ include sundials_config.h.in
 graft include
 recursive-include ext *.h
 recursive-include src *.h
+recursive-include ext/libexecstream/posix *.cpp
+recursive-include ext/libexecstream/win *.cpp
