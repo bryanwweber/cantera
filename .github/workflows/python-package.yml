@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: ["sdist"]
     env:
-      BOOST_INCLUDE: ${{ github.workspace }}/include/boost
+      BOOST_INCLUDE: ${{ github.workspace }}/include
       BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
     steps:
     - name: Download pre-built sdist
