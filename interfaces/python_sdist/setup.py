@@ -99,10 +99,10 @@ if sys.platform != "win32":
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
     }
     sundials_cflags = ["-w"]
-    sundials_define_macros = []
+    sundials_macros = []
 else:
     extra_compile_flags = []
-    sundials_define_macros = ["_CRT_SECURE_NO_WARNINGS"]
+    sundials_macros = ["_CRT_SECURE_NO_WARNINGS"]
     sundials_configh = {
         "SUNDIALS_USE_GENERIC_MATH": "/* #undef SUNDIALS_USE_GENERIC_MATH */",
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
@@ -126,16 +126,16 @@ extensions = cythonize([
 ])
 
 
-def lib_def(sources, cflags, include_dirs, define_macros):
+def lib_def(sources, cflags, include_dirs, macros):
     """Convenience factory to create the dictionary for a Setuptools library build."""
     return dict(sources=sources, cflags=cflags, include_dirs=include_dirs,
-                define_macros=define_macros)
+                macros=macros)
 
 
 sundials_inc_dir = include_dirs + [str(EXT_SRC / "sundials" / "sundials")]
 libraries = [
     ("sundials", lib_def(sundials_sources, sundials_cflags, sundials_inc_dir,
-                         sundials_define_macros)),
+                         sundials_macros)),
     ("yaml-cpp", lib_def(yaml_cpp_sources, extra_compile_flags, include_dirs, [])),
     ("fmtlib", lib_def(fmt_sources, extra_compile_flags, include_dirs, [])),
     ("libexecstream", {"sources": libexecstream_sources, "include_dirs": include_dirs})

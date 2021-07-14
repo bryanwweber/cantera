@@ -54,18 +54,22 @@ def replace_git_hash(target, source, env):
     # the git commit is unknown from the sdist
     target = Path(target[0].abspath)
     source = Path(source[0].abspath)
-    git_commit_replaced = re.sub("#ifdef GIT_COMMIT.*#endif",
+    git_commit_replaced = re.sub("#ifdef GIT_COMMIT.*#endif\n",
                                  f"""    return "{env['git_commit']}";""",
                                  source.read_text(),
                                  flags=re.DOTALL)
     target.write_text(git_commit_replaced)
 
 
-build(localenv.RecursiveInstall("src", "#src",
-                                exclude=["fortran", "matlab", r"global\.cpp"]))
+# Use RecursiveInstall to be able to exclude files and folders.
+build(localenv.RecursiveInstall(
+    "src",
+    "#src",
+    exclude=["fortran", "matlab", r"global\.cpp", "SCons.*"],
+))
 
 build(localenv.Command("src/base/global.cpp", "#src/base/global.cpp",
-                       [Delete("$TARGET"), replace_git_hash]))
+                       replace_git_hash))
 
 include_target = build(localenv.Command("include", "#include",
                                         Copy("$TARGET", "$SOURCE")))
@@ -74,11 +78,12 @@ localenv.Depends(include_target, env["ext_include_copies_target"])
 
 build(localenv.Command("ext", "#ext", copy_ext_src))
 
-# Use RecursiveInstall to make sure that dependencies are set on each file in these
-# directories.
+# Use RecursiveInstall to make sure that files are not overwritten during the copy.
+# A normal Copy Action would fail because of the existing directories.
 copy_interface = build(
     localenv.RecursiveInstall("#interfaces/python_sdist/cantera",
-                              "#interfaces/cython/cantera")
+                              "#interfaces/cython/cantera",
+                              exclude=["__pycache__"])
 )
 data_files = build(
     localenv.RecursiveInstall("#interfaces/python_sdist/cantera/data",
@@ -91,8 +96,8 @@ data_files += build(
 
 # Copy the minimal Sundials configuration template into the sdist so that
 # it can be filled in at compile time on the user's machine
-build(localenv.Command("sundials_config.h.in",
-                       "#ext/sundials_config.h.in", Copy("$TARGET", "$SOURCE")))
+build(localenv.Command("sundials_config.h.in", "#ext/sundials_config.h.in",
+                       Copy("$TARGET", "$SOURCE")))
 
 build(localenv.SubstFile("setup.cfg", "setup.cfg.in"))
 

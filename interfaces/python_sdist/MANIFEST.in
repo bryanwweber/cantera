@@ -7,3 +7,4 @@ recursive-include ext *.h
 recursive-include src *.h
 recursive-include ext/libexecstream/posix *.cpp
 recursive-include ext/libexecstream/win *.cpp
+exclude include/cantera/ext/sundials/sundials_config.h

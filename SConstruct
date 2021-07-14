@@ -119,7 +119,7 @@ if "clean" in COMMAND_LINE_TARGETS:
     for name in Path("interfaces/python_sdist").iterdir():
         if name.is_dir():
             remove_directory(name)
-        elif name.name not in (".gitignore", "MANIFEST.in", "setup.cfg.in", "setup.py", "SConscript"):
+        elif name.name in ("LICENSE.txt", "setup.cfg", "sundials_config.h.in"):
             remove_file(name)
 
     print("Done removing output files.")
