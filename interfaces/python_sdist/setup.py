@@ -102,7 +102,7 @@ if sys.platform != "win32":
     sundials_macros = []
 else:
     extra_compile_flags = []
-    sundials_macros = ["_CRT_SECURE_NO_WARNINGS"]
+    sundials_macros = [("_CRT_SECURE_NO_WARNINGS", None)]
     sundials_configh = {
         "SUNDIALS_USE_GENERIC_MATH": "/* #undef SUNDIALS_USE_GENERIC_MATH */",
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
