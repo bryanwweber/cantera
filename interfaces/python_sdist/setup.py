@@ -34,7 +34,8 @@ class CanteraOptionsMixin:
 
     def finalize_options(self):
         if self.boost_include is not None:
-            assert Path(self.boost_include).is_dir(), f"The path {self.boost_include!r} is not a directory."
+            if not Path(self.boost_include).is_dir():
+                raise TypeError(f"The path {self.boost_include!r} is not a directory.")
         super().finalize_options()
 
     def run(self):
@@ -45,14 +46,21 @@ class CanteraOptionsMixin:
 
 
 class InstallCommand(CanteraOptionsMixin, install):
-    user_options = getattr(install, "user_options", []) + CanteraOptionsMixin.user_options
+    user_options = (getattr(install, "user_options", [])
+                    + CanteraOptionsMixin.user_options)
 
 
 class DevelopCommand(CanteraOptionsMixin, develop):
-    user_options = getattr(develop, "user_options", []) + CanteraOptionsMixin.user_options
+    user_options = (getattr(develop, "user_options", [])
+                    + CanteraOptionsMixin.user_options)
 
 
-if not all(p.exists() for p in CYTHON_BUILT_FILES) or "sdist" in sys.argv or FORCE_CYTHON_COMPILE or os.environ.get("FORCE_CYTHON_COMPILE", False):
+if (
+    not all(p.exists() for p in CYTHON_BUILT_FILES)
+    or "sdist" in sys.argv
+    or FORCE_CYTHON_COMPILE
+    or os.environ.get("FORCE_CYTHON_COMPILE", False)
+):
     from Cython.Build import cythonize
     CYTHON_EXT = ".pyx"
     for p in CYTHON_BUILT_FILES:
@@ -60,8 +68,9 @@ if not all(p.exists() for p in CYTHON_BUILT_FILES) or "sdist" in sys.argv or FOR
             p.unlink()
 else:
     CYTHON_EXT = ".cpp"
+
     def cythonize(extensions):
-        """Define a no-op for when we"re not using Cython."""
+        """Define a no-op for when we're not using Cython."""
         return extensions
 
 source_files = ["cantera/_cantera" + CYTHON_EXT]
@@ -84,17 +93,19 @@ elif BOOST_INCLUDE is not None:
     include_dirs.append(BOOST_INCLUDE)
 
 if sys.platform != "win32":
-    extra_compile_args = ["-std=c++11"]
+    extra_compile_flags = ["-std=c++11"]
     sundials_configh = {
         "SUNDIALS_USE_GENERIC_MATH": "#define SUNDIALS_USE_GENERIC_MATH 1",
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
     }
+    sundials_cflags = ["-w"]
 else:
     extra_compile_args = []
     sundials_configh = {
         "SUNDIALS_USE_GENERIC_MATH": "/* #undef SUNDIALS_USE_GENERIC_MATH */",
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
     }
+    sundials_cflags = []
 
 config_h_in = (HERE / "sundials_config.h.in").read_text()
 config_h = HERE / "sundials_config.h"
@@ -107,26 +118,27 @@ extensions = cythonize([
         "cantera._cantera",
         source_files,
         include_dirs=include_dirs,
-        extra_compile_args=extra_compile_args,
+        extra_compile_args=extra_compile_flags,
         language="c++",
     ),
 ])
 
+
+def lib_def(sources, cflags, include_dirs):
+    """Convenience factory to create the dictionary for a Setuptools library build."""
+    return dict(sources=sources, cflags=cflags, include_dirs=include_dirs)
+
+
+sundials_inc_dir = include_dirs + [str(EXT_SRC / "sundials" / "sundials")]
 libraries = [
-    ("sundials", {"sources": sundials_sources, "cflags": ["-w"], "include_dirs": include_dirs + [str(EXT_SRC / "sundials" / "sundials")]}),
-    ("yaml-cpp", {"sources": yaml_cpp_sources, "cflags": ["-std=c++11"], "include_dirs": include_dirs}),
-    ("fmtlib", {"sources": fmt_sources, "cflags": ["-std=c++11"], "include_dirs": include_dirs}),
+    ("sundials", lib_def(sundials_sources, sundials_cflags, sundials_inc_dir)),
+    ("yaml-cpp", lib_def(yaml_cpp_sources, extra_compile_flags, include_dirs)),
+    ("fmtlib", lib_def(fmt_sources, extra_compile_flags, include_dirs)),
     ("libexecstream", {"sources": libexecstream_sources, "include_dirs": include_dirs})
 ]
 
-try:
-    setup(
-        ext_modules=extensions,
-        libraries=libraries,
-        cmdclass={"install": InstallCommand, "develop": DevelopCommand},
-    )
-except Exception:
-    from textwrap import dedent
-    message = """\
-        Building failed, you moron.
-    """
+setup(
+    ext_modules=extensions,
+    libraries=libraries,
+    cmdclass={"install": InstallCommand, "develop": DevelopCommand},
+)
