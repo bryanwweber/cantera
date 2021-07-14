@@ -100,7 +100,7 @@ if sys.platform != "win32":
     }
     sundials_cflags = ["-w"]
 else:
-    extra_compile_args = []
+    extra_compile_flags = []
     sundials_configh = {
         "SUNDIALS_USE_GENERIC_MATH": "/* #undef SUNDIALS_USE_GENERIC_MATH */",
         "SUNDIALS_BLAS_LAPACK": "/* #undef SUNDIALS_BLAS_LAPACK */"
