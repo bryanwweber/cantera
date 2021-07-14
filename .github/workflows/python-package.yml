@@ -39,9 +39,13 @@ jobs:
         if-no-files-found: error
 
   manylinux-wheel:
-    name: Build Manylinux Wheels in Docker on Ubuntu-20.04
+    name: Build Manylinux Wheels for py${{ matrix.py }}
     runs-on: ubuntu-20.04
     needs: ["sdist"]
+    strategy:
+      matrix:
+        py: ["36", "37", "38", "39"]
+      fail-fast: true
     env:
       BOOST_INCLUDE: ${{ github.workspace }}/include
       BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
@@ -73,11 +77,8 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v1.12.0
       env:
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: "cp35-*"
-        # CIBW_BEFORE_ALL: yum install -y boost-devel
-        CIBW_ARCHS: "auto64"
-        # CIBW_MANYLINUX_X86_64_IMAGE: "manylinux2014"
+        CIBW_BUILD: cp${{ matrix.py }}-*
+        CIBW_ARCHS: auto aarch64 ppc64le s390x
 
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
@@ -91,12 +92,8 @@ jobs:
     needs: ["sdist"]
     strategy:
       matrix:
-        include:
-        - py-arch: 'x86'
-          CIBW_ARCH: 'x86'
-        - py-arch: 'x64'
-          CIBW_ARCH: 'AMD64'
-      fail-fast: false
+        py: ["36", "37", "38", "39"]
+      fail-fast: true
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
       BOOST_URL: https://pilotfiber.dl.sourceforge.net/project/boost/boost/1.75.0/boost_1_75_0.7z
@@ -128,8 +125,8 @@ jobs:
       uses: pypa/cibuildwheel@v1.12.0
       env:
         CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
-        CIBW_ARCHS: ${{ matrix.CIBW_ARCH }}
-        CIBW_BUILD: cp3*-*
+        CIBW_ARCHS: auto
+        CIBW_BUILD: cp${{ matrix.py }}-*
         CIBW_SKIP: cp35-*
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
@@ -138,11 +135,15 @@ jobs:
         name: wheels
 
   macos-intel-wheel:
-    name: Build Wheels on macOS Intel
+    name: Build Wheels on macOS Intel for py${{ matrix.py }}
     runs-on: macos-10.15
     needs: ["sdist"]
     env:
       MACOSX_DEPLOYMENT_TARGET: 10.9
+    strategy:
+      matrix:
+        py: ["36", "37", "38", "39"]
+      fail-fast: true
     steps:
     - name: Download pre-built sdist
       uses: actions/download-artifact@v2
@@ -155,7 +156,7 @@ jobs:
     - name: Build wheels
       uses: pypa/cibuildwheel@v1.12.0
       env:
-        CIBW_BUILD: cp3*-*
+        CIBW_BUILD: cp${{ matrix.py }}-*
         CIBW_SKIP: cp35-*
         CIBW_ARCHS: "x86_64"
 
@@ -166,9 +167,13 @@ jobs:
         name: wheels
 
   macos-arm-wheel:
-    name: Build Wheels for macOS arm64
+    name: Build Wheels for macOS arm64 for py${{ matrix.py }}
     runs-on: macos-10.15
     needs: ["sdist"]
+    strategy:
+      matrix:
+        py: ["38", "39"]
+      fail-fast: true
     env:
       SDKROOT: "macosx11.0"
       _PYTHON_HOST_PLATFORM: "macosx-11.0-arm64"
@@ -189,8 +194,7 @@ jobs:
       env:
         CIBW_ENVIRONMENT: 'BOOST_INCLUDE="$(brew --prefix)/include"'
         CIBW_ARCHS: "arm64"
-        CIBW_BUILD: cp3*-*
-        CIBW_SKIP: cp35-*
+        CIBW_BUILD: cp${{ matrix.py }}-*
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
       with:
