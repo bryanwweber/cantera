@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: python3 -m pip install scons numpy cython build
     - name: Build the interface
-      run: python3 `which scons` build f90_interface=n debug=n googletest=none python_package=sdist
+      run: python3 `which scons` build f90_interface=n debug=n googletest=none python_package=sdist use_pch=n
     - name: Build the sdist
       run: python3 -m build -s
       working-directory: interfaces/python_sdist
