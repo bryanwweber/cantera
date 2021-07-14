@@ -54,7 +54,7 @@ def replace_git_hash(target, source, env):
     # the git commit is unknown from the sdist
     target = Path(target[0].abspath)
     source = Path(source[0].abspath)
-    git_commit_replaced = re.sub("#ifdef GIT_COMMIT.*#endif\n",
+    git_commit_replaced = re.sub("#ifdef GIT_COMMIT.*?#endif",
                                  f"""    return "{env['git_commit']}";""",
                                  source.read_text(),
                                  flags=re.DOTALL)
