@@ -39,12 +39,13 @@ jobs:
         if-no-files-found: error
 
   manylinux-wheel:
-    name: Build Manylinux Wheels for py${{ matrix.py }}
+    name: Build ${{ matrix.arch }} Manylinux Wheels for py${{ matrix.py }}
     runs-on: ubuntu-20.04
     needs: ["sdist"]
     strategy:
       matrix:
         py: ["36", "37", "38", "39"]
+        arch: ["x86_64", "i686", "aarch64", "ppc64le", "s390x"]
       fail-fast: true
     env:
       BOOST_INCLUDE: ${{ github.workspace }}/include
@@ -78,7 +79,7 @@ jobs:
       uses: pypa/cibuildwheel@v1.12.0
       env:
         CIBW_BUILD: cp${{ matrix.py }}-*
-        CIBW_ARCHS: auto aarch64 ppc64le s390x
+        CIBW_ARCHS: ${{ matrix.arch }}
 
     - name: Archive the built wheels
       uses: actions/upload-artifact@v2
@@ -87,12 +88,13 @@ jobs:
         name: wheels
 
   windows-wheel:
-    name: Build Wheels on Windows
+    name: Build Wheels on ${{ matrix.arch }} Windows with py${{ matrix.py }}
     runs-on: windows-2019
     needs: ["sdist"]
     strategy:
       matrix:
         py: ["36", "37", "38", "39"]
+        arch: ["AMD64", "x86"]
       fail-fast: true
     env:
       BOOST_ROOT: ${{ github.workspace }}/3rdparty/boost
@@ -125,7 +127,7 @@ jobs:
       uses: pypa/cibuildwheel@v1.12.0
       env:
         CIBW_ENVIRONMENT: "BOOST_INCLUDE=${BOOST_ROOT}"
-        CIBW_ARCHS: auto
+        CIBW_ARCHS: ${{ matrix.arch }}
         CIBW_BUILD: cp${{ matrix.py }}-*
         CIBW_SKIP: cp35-*
     - name: Archive the built wheels
