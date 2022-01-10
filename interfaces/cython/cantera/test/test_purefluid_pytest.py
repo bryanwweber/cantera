@@ -199,205 +199,253 @@ def test_pq_setter_triple_check(water):
 
 def test_quality_exceptions(water):
     # Critical point
-    self.water.TP = 300.0, ct.one_atm
+    water.TP = 300.0, ct.one_atm
     water.TQ = water.critical_temperature, 0.5
-    assertNear(water.P, water.critical_pressure)
+    assert np.isclose(water.P, water.critical_pressure)
     water.TP = 300.0, ct.one_atm
     water.PQ = water.critical_pressure, 0.5
-    assertNear(water.T, water.critical_temperature)
+    assert np.isclose(water.T, water.critical_temperature)
 
     # Supercritical
-    with assertRaisesRegex(ct.CanteraError, "supercritical"):
+    with pytest.raises(ct.CanteraError, match="supercritical"):
         water.TQ = 1.001 * water.critical_temperature, 0.0
-        with assertRaisesRegex(ct.CanteraError, "supercritical"):
+        with pytest.raises(ct.CanteraError, match="supercritical"):
             water.PQ = 1.001 * water.critical_pressure, 0.0
 
     # Q negative
-    with assertRaisesRegex(ct.CanteraError, "Invalid vapor fraction"):
+    with pytest.raises(ct.CanteraError, match="Invalid vapor fraction"):
         water.TQ = 373.15, -0.001
-        with assertRaisesRegex(ct.CanteraError, "Invalid vapor fraction"):
+        with pytest.raises(ct.CanteraError, match="Invalid vapor fraction"):
             water.PQ = ct.one_atm, -0.001
 
     # Q larger than one
-    with assertRaisesRegex(ct.CanteraError, "Invalid vapor fraction"):
+    with pytest.raises(ct.CanteraError, match="Invalid vapor fraction"):
         water.TQ = 373.15, 1.001
-        with assertRaisesRegex(ct.CanteraError, "Invalid vapor fraction"):
+        with pytest.raises(ct.CanteraError, match="Invalid vapor fraction"):
             water.PQ = ct.one_atm, 1.001
 
 
-def test_saturated_mixture(self):
-    self.water.TP = 300, ct.one_atm
-    with self.assertRaisesRegex(ct.CanteraError, "Saturated mixture detected"):
-        self.water.TP = 300, self.water.P_sat
+def test_set_saturated_mixture_raises(water):
+    water.TP = 300, ct.one_atm
+    with pytest.raises(ct.CanteraError, match="Saturated mixture detected"):
+        water.TP = 300, water.P_sat
 
+
+def test_saturated_vapor_properties(water):
     w = ct.Water()
 
     # Saturated vapor
-    self.water.TQ = 373.15, 1.0
-    self.assertEqual(self.water.phase_of_matter, "liquid-gas-mix")
-    w.TP = self.water.T, 0.999 * self.water.P_sat
-    self.assertNear(self.water.cp, w.cp, 1.0e-3)
-    self.assertNear(self.water.cv, w.cv, 1.0e-3)
-    self.assertNear(
-        self.water.thermal_expansion_coeff, w.thermal_expansion_coeff, 1.0e-3
+    water.TQ = 373.15, 1.0
+    assert water.phase_of_matter == "liquid-gas-mix"
+    w.TP = water.T, 0.999 * water.P_sat
+    assert np.isclose(water.cp, w.cp, rtol=1.0e-3)
+    assert np.isclose(water.cv, w.cv, rtol=1.0e-3)
+    assert np.isclose(
+        water.thermal_expansion_coeff, w.thermal_expansion_coeff, rtol=1.0e-3
     )
-    self.assertNear(
-        self.water.isothermal_compressibility, w.isothermal_compressibility, 1.0e-3
+    assert np.isclose(
+        water.isothermal_compressibility, w.isothermal_compressibility, rtol=1.0e-3
     )
 
+
+def test_saturated_mix_properties(water):
     # Saturated mixture
-    self.water.TQ = 373.15, 0.5
-    self.assertEqual(self.water.phase_of_matter, "liquid-gas-mix")
-    self.assertEqual(self.water.cp, np.inf)
-    self.assertTrue(np.isnan(self.water.cv))
-    self.assertEqual(self.water.isothermal_compressibility, np.inf)
-    self.assertEqual(self.water.thermal_expansion_coeff, np.inf)
+    water.TQ = 373.15, 0.5
+    assert water.phase_of_matter == "liquid-gas-mix"
+    assert np.isinf(water.cp)
+    assert np.isnan(water.cv)
+    assert np.isinf(water.isothermal_compressibility)
+    assert np.isinf(water.thermal_expansion_coeff)
 
+
+def test_saturated_liquid_properties(water):
+    w = ct.Water()
     # Saturated liquid
-    self.water.TQ = 373.15, 0.0
-    self.assertEqual(self.water.phase_of_matter, "liquid-gas-mix")
-    w.TP = self.water.T, 1.001 * self.water.P_sat
-    self.assertNear(self.water.cp, w.cp, 1.0e-3)
-    self.assertNear(self.water.cv, w.cv, 1.0e-3)
-    self.assertNear(
-        self.water.thermal_expansion_coeff, w.thermal_expansion_coeff, 1.0e-3
+    water.TQ = 373.15, 0.0
+    assert water.phase_of_matter == "liquid-gas-mix"
+    w.TP = water.T, 1.001 * water.P_sat
+    assert np.isclose(water.cp, w.cp, rtol=1.0e-3)
+    assert np.isclose(water.cv, w.cv, rtol=1.0e-3)
+    assert np.isclose(
+        water.thermal_expansion_coeff, w.thermal_expansion_coeff, rtol=1.0e-3
     )
-    self.assertNear(
-        self.water.isothermal_compressibility, w.isothermal_compressibility, 1.0e-3
+    assert np.isclose(
+        water.isothermal_compressibility, w.isothermal_compressibility, rtol=1.0e-3
     )
 
 
-def test_saturation_near_limits(self):
+def test_saturation_near_low_T_limit(water):
     # Low temperature limit (triple point)
-    self.water.TP = 300, ct.one_atm
-    self.water.P_sat  # ensure that solver buffers sufficiently different values
-    self.water.TP = self.water.min_temp, ct.one_atm
-    psat = self.water.P_sat
-    self.water.TP = 300, ct.one_atm
-    self.water.P_sat  # ensure that solver buffers sufficiently different values
-    self.water.TP = 300, psat
-    self.assertNear(self.water.T_sat, self.water.min_temp)
+    water.TP = 300, ct.one_atm
+    water.P_sat  # ensure that solver buffers sufficiently different values
+    water.TP = water.min_temp, ct.one_atm
+    psat = water.P_sat
+    water.TP = 300, ct.one_atm
+    water.P_sat  # ensure that solver buffers sufficiently different values
+    water.TP = 300, psat
+    assert np.isclose(water.T_sat, water.min_temp)
 
+
+def test_saturation_near_high_T_limit(water):
     # High temperature limit (critical point) - saturation temperature
-    self.water.TP = 300, ct.one_atm
-    self.water.P_sat  # ensure that solver buffers sufficiently different values
-    self.water.TP = self.water.critical_temperature, self.water.critical_pressure
-    self.assertNear(self.water.T_sat, self.water.critical_temperature)
+    water.TP = 300, ct.one_atm
+    water.P_sat  # ensure that solver buffers sufficiently different values
+    water.TP = water.critical_temperature, water.critical_pressure
+    assert np.isclose(water.T_sat, water.critical_temperature)
 
     # High temperature limit (critical point) - saturation pressure
-    self.water.TP = 300, ct.one_atm
-    self.water.P_sat  # ensure that solver buffers sufficiently different values
-    self.water.TP = self.water.critical_temperature, self.water.critical_pressure
-    self.assertNear(self.water.P_sat, self.water.critical_pressure)
+    water.TP = 300, ct.one_atm
+    water.P_sat  # ensure that solver buffers sufficiently different values
+    water.TP = water.critical_temperature, water.critical_pressure
+    assert np.isclose(water.P_sat, water.critical_pressure)
 
+
+def test_supercritical_setter_raises(water):
     # Supercricital
-    with self.assertRaisesRegex(ct.CanteraError, "Illegal temperature value"):
-        self.water.TP = (
-            1.001 * self.water.critical_temperature,
-            self.water.critical_pressure,
+    with pytest.raises(ct.CanteraError, match="Illegal temperature value"):
+        water.TP = (
+            1.001 * water.critical_temperature,
+            water.critical_pressure,
         )
-        self.water.P_sat
-        with self.assertRaisesRegex(ct.CanteraError, "Illegal pressure value"):
-            self.water.TP = (
-                self.water.critical_temperature,
-                1.001 * self.water.critical_pressure,
-            )
-            self.water.T_sat
+        water.P_sat
+    with pytest.raises(ct.CanteraError, match="Illegal pressure value"):
+        water.TP = (
+            water.critical_temperature,
+            1.001 * water.critical_pressure,
+        )
+        water.T_sat
 
     # Below triple point
-    with self.assertRaisesRegex(ct.CanteraError, "Illegal temperature"):
-        self.water.TP = 0.999 * self.water.min_temp, ct.one_atm
-        self.water.P_sat
-        # @todo: test disabled pending fix of GitHub issue #605
-        # with self.assertRaisesRegex(ct.CanteraError, "Illegal pressure value"):
-        #     self.water.TP = 300, .999 * psat
-        #     self.water.T_sat
+    with pytest.raises(ct.CanteraError, match="Illegal temperature"):
+        water.TP = 0.999 * water.min_temp, ct.one_atm
+        water.P_sat
+    # @todo: test disabled pending fix of GitHub issue #605
+    # with self.assertRaisesRegex(ct.CanteraError, "Illegal pressure value"):
+    #     self.water.TP = 300, .999 * psat
+    #     self.water.T_sat
 
 
-def test_TPQ(self):
-    self.water.TQ = 400, 0.8
-    T, P, Q = self.water.TPQ
-    self.assertNear(T, 400)
-    self.assertNear(Q, 0.8)
+def test_TPQ(water):
+    water.TQ = 400.0, 0.8
+    T, P, Q = water.TPQ
+    assert np.isclose(T, 400.0)
+    assert np.isclose(Q, 0.8)
 
     # a supercritical state
-    self.water.TPQ = 800, 3e7, 1
-    self.assertNear(self.water.T, 800)
-    self.assertNear(self.water.P, 3e7)
+    water.TPQ = 800.0, 3e7, 1.0
+    assert np.isclose(water.T, 800.0)
+    assert np.isclose(water.P, 3e7)
 
-    self.water.TPQ = T, P, Q
-    self.assertNear(self.water.Q, 0.8)
-    with self.assertRaisesRegex(ct.CanteraError, "inconsistent"):
-        self.water.TPQ = T, 0.999 * P, Q
-        with self.assertRaisesRegex(ct.CanteraError, "inconsistent"):
-            self.water.TPQ = T, 1.001 * P, Q
-            with self.assertRaises(TypeError):
-                self.water.TPQ = T, P, "spam"
+    water.TPQ = T, P, Q
+    assert np.isclose(water.Q, 0.8)
+    with pytest.raises(ct.CanteraError, match="inconsistent"):
+        water.TPQ = T, 0.999 * P, Q
+    with pytest.raises(ct.CanteraError, match="inconsistent"):
+        water.TPQ = T, 1.001 * P, Q
+    with pytest.raises(TypeError):
+        water.TPQ = T, P, "spam"
 
-    self.water.TPQ = 500, 1e5, 1  # superheated steam
-    self.assertNear(self.water.P, 1e5)
-    with self.assertRaisesRegex(ct.CanteraError, "inconsistent"):
-        self.water.TPQ = 500, 1e5, 0  # vapor fraction should be 1 (T < Tc)
-        with self.assertRaisesRegex(ct.CanteraError, "inconsistent"):
-            self.water.TPQ = 700, 1e5, 0  # vapor fraction should be 1 (T > Tc)
+    water.TPQ = 500, 1e5, 1  # superheated steam
+    assert np.isclose(water.P, 1e5)
+    with pytest.raises(ct.CanteraError, match="inconsistent"):
+        water.TPQ = 500, 1e5, 0  # vapor fraction should be 1 (T < Tc)
+    with pytest.raises(ct.CanteraError, match="inconsistent"):
+        water.TPQ = 700, 1e5, 0  # vapor fraction should be 1 (T > Tc)
 
 
-def test_phase_of_matter(self):
-    self.water.TP = 300, 101325
-    self.assertEqual(self.water.phase_of_matter, "liquid")
-    self.water.TP = 500, 101325
-    self.assertEqual(self.water.phase_of_matter, "gas")
-    self.water.TP = self.water.critical_temperature * 2, 101325
-    self.assertEqual(self.water.phase_of_matter, "supercritical")
-    self.water.TP = 300, self.water.critical_pressure * 2
-    self.assertEqual(self.water.phase_of_matter, "supercritical")
-    self.water.TQ = 300, 0.4
-    self.assertEqual(self.water.phase_of_matter, "liquid-gas-mix")
+def test_phase_of_matter(water):
+    water.TP = 300, 101325
+    assert water.phase_of_matter == "liquid"
+    water.TP = 500, 101325
+    assert water.phase_of_matter == "gas"
+    water.TP = water.critical_temperature * 2, 101325
+    assert water.phase_of_matter == "supercritical"
+    water.TP = 300, water.critical_pressure * 2
+    assert water.phase_of_matter == "supercritical"
+    water.TQ = 300, 0.4
+    assert water.phase_of_matter == "liquid-gas-mix"
 
     # These cases work after fixing GH-786
     n2 = ct.Nitrogen()
     n2.TP = 100, 1000
-    self.assertEqual(n2.phase_of_matter, "gas")
+    assert n2.phase_of_matter == "gas"
 
     co2 = ct.CarbonDioxide()
-    self.assertEqual(co2.phase_of_matter, "gas")
+    assert co2.phase_of_matter == "gas"
 
 
-def test_water_backends(self):
-    w = ct.Water(backend="Reynolds")
-    self.assertEqual(w.thermo_model, "PureFluid")
-    w = ct.Water(backend="IAPWS95")
-    self.assertEqual(w.thermo_model, "liquid-water-IAPWS95")
-    with self.assertRaisesRegex(KeyError, "Unknown backend"):
+@pytest.mark.parametrize(
+    "backend,thermo_model",
+    [("Reynolds", "PureFluid"), ("IAPWS95", "liquid-water-IAPWS95")],
+)
+def test_water_backends(backend, thermo_model):
+    w = ct.Water(backend=backend)
+    assert w.thermo_model == thermo_model
+
+
+def test_unknown_water_backend_error():
+    with pytest.raises(KeyError, match="Unknown backend"):
         ct.Water("foobar")
 
 
-def test_water_iapws(self):
+def test_water_iapws():
     w = ct.Water(backend="IAPWS95")
-    self.assertNear(w.critical_density, 322.0)
-    self.assertNear(w.critical_temperature, 647.096)
-    self.assertNear(w.critical_pressure, 22064000.0)
+    assert np.isclose(w.critical_density, 322.0)
+    assert np.isclose(w.critical_temperature, 647.096)
+    assert np.isclose(w.critical_pressure, 22064000.0)
 
     # test internal TP setters (setters update temperature at constant
     # density before updating pressure)
     w.TP = 300, ct.one_atm
     dens = w.density
     w.TP = 2000, ct.one_atm  # supercritical
-    self.assertEqual(w.phase_of_matter, "supercritical")
+    assert w.phase_of_matter == "supercritical"
     w.TP = 300, ct.one_atm  # state goes from supercritical -> gas -> liquid
-    self.assertNear(w.density, dens)
-    self.assertEqual(w.phase_of_matter, "liquid")
+    assert np.isclose(w.density, dens)
+    assert w.phase_of_matter == "liquid"
 
     # test setters for critical conditions
     w.TP = w.critical_temperature, w.critical_pressure
-    self.assertNear(w.density, 322.0)
+    assert np.isclose(w.density, 322.0)
     w.TP = 2000, ct.one_atm  # uses current density as initial guess
     w.TP = 273.16, ct.one_atm  # uses fixed density as initial guess
-    self.assertNear(w.density, 999.84376)
-    self.assertEqual(w.phase_of_matter, "liquid")
+    assert np.isclose(w.density, 999.84376)
+    assert w.phase_of_matter == "liquid"
     w.TP = w.T, w.P_sat
-    self.assertEqual(w.phase_of_matter, "liquid")
-    with self.assertRaisesRegex(ct.CanteraError, "assumes liquid phase"):
+    assert w.phase_of_matter == "liquid"
+    with pytest.raises(ct.CanteraError, match="assumes liquid phase"):
         w.TP = 273.1599999, ct.one_atm
-        with self.assertRaisesRegex(ct.CanteraError, "assumes liquid phase"):
-            w.TP = 500, ct.one_atm
+    with pytest.raises(ct.CanteraError, match="assumes liquid phase"):
+        w.TP = 500, ct.one_atm
+
+
+@pytest.fixture(scope="class", params=("HFC-134a", "heptane"))
+def create_fluid(request):
+    request.cls.fluid = ct.PureFluid("liquidvapor.yaml", request.param)
+    from ruamel import yaml
+    from .utilities import TEST_DATA_PATH
+    reader = yaml.YAML(typ="safe")
+    request.cls.states = reader.load(
+        TEST_DATA_PATH / "state-data.yaml"
+    )[request.param]
+
+@pytest.mark.usefixtures("create_fluid")
+class TestPureFluid:
+
+    def test_has_phase_transition(self):
+        assert self.fluid.has_phase_transition
+
+    def test_consistency_temperature(self):
+        for state in self.states["states"]:
+            dT = 2e-5 * state["T"]
+            self.fluid.TD = state["T"] - dT, state["rho"]
+            s1 = self.fluid.s
+            u1 = self.fluid.u
+            self.fluid.TD = state["T"] + dT, state["rho"]
+            s2 = self.fluid.s
+            u2 = self.fluid.u
+
+            # At constant volume, dU = T dS
+            assert np.isclose((u2-u1)/(s2-s1), state["T"])
+
+

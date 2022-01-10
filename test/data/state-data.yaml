@@ -1,0 +1,479 @@
+HFC-134a:
+  reference:
+    phase: critical
+    T: 374.21
+    p: 4.05928e+06
+    rho: 511.9
+    u: 3.8170937e+05
+    s: 1562.0991
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 175.0
+    p: 1.0e+05
+    rho: 1577.6239
+    u: 7.753458600000001e+04
+    s: 447.88182
+    tolMod: 1.0
+  - phase: liquid
+    T: 210.0
+    p: 1.0e+05
+    rho: 1483.2128
+    u: 1.1948565999999999e+05
+    s: 666.33877
+    tolMod: 1.0
+  - phase: vapor
+    T: 250.0
+    p: 1.0e+05
+    rho: 5.1144317
+    u: 3.6559424e+05
+    s: 1757.7491
+    tolMod: 1.0
+  - phase: vapor
+    T: 370.0
+    p: 1.0e+05
+    rho: 3.3472612
+    u: 4.5982664e+05
+    s: 2097.0769
+    tolMod: 1.0
+  - phase: liquid
+    T: 290.0
+    p: 1.0e+07
+    rho: 1278.47
+    u: 2.1699119e+05
+    s: 1061.3409
+    tolMod: 1.0
+  - phase: super
+    T: 410.0
+    p: 1.0e+07
+    rho: 736.54666
+    u: 3.9902258e+05
+    s: 1597.2395
+    tolMod: 1.0
+  - phase: super
+    T: 450.0
+    p: 4.0e+07
+    rho: 999.34087
+    u: 4.1192422e+05
+    s: 1610.8568
+    tolMod: 1.0
+carbon-dioxide:
+  reference:
+    phase: critical
+    T: 304.21
+    p: 7.3834e+06
+    rho: 464.0
+    u: 2.413975e+05
+    s: 931.2
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 230.0
+    p: 2.0e+06
+    rho: 1132.4
+    u: 2.6483839632638643e+04
+    s: 120.80000000000001
+    tolMod: 1.0
+  - phase: liquid
+    T: 270.0
+    p: 1.0e+07
+    rho: 989.97
+    u: 1.0048868379849894e+05
+    s: 420.8
+    tolMod: 1.0
+  - phase: vapor
+    T: 250.0
+    p: 1.788e+06
+    rho: 46.728971962616825
+    u: 3.203268e+05
+    s: 1450.0
+    tolMod: 10.0
+  - phase: vapor
+    T: 300.0
+    p: 2.0e+06
+    rho: 39.44773175542406
+    u: 3.5871e+05
+    s: 1617.3999999999999
+    tolMod: 1.0
+  - phase: super
+    T: 500.0
+    p: 1.0e+06
+    rho: 10.665529010238908
+    u: 5.1946e+05
+    s: 2264.9
+    tolMod: 1.0
+  - phase: super
+    T: 600.0
+    p: 2.0e+07
+    rho: 180.50541516245488
+    u: 5.7114e+05
+    s: 1836.6
+    tolMod: 1.0
+heptane:
+  reference:
+    phase: critical
+    T: 537.68
+    p: 2.6199e+06
+    rho: 197.6
+    u: 7.345813967611336e+05
+    s: 1745.6000000000001
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 300.0
+    p: 6637.0
+    rho: 677.5067750677506
+    u: -9.796212
+    s: 0.0
+    tolMod: 10.0
+  - phase: liquid
+    T: 400.0
+    p: 2.175e+05
+    rho: 584.1121495327103
+    u: 2.4763764e+05
+    s: 709.0
+    tolMod: 10.0
+  - phase: vapor
+    T: 490.0
+    p: 1.282e+06
+    rho: 45.00450045004501
+    u: 6.8715396e+05
+    s: 1713.7
+    tolMod: 10.0
+  - phase: vapor
+    T: 480.0
+    p: 7.0e+05
+    rho: 20.74688796680498
+    u: 6.793e+05
+    s: 1747.7
+    tolMod: 1.0
+  - phase: super
+    T: 600.0
+    p: 2.0e+06
+    rho: 50.200803212851405
+    u: 9.7503e+05
+    s: 2235.6
+    tolMod: 1.0
+  - phase: super
+    T: 680.0
+    p: 2.0e+05
+    rho: 3.584229390681003
+    u: 1.23349e+06
+    s: 2845.0
+    tolMod: 1.0
+hydrogen:
+  reference:
+    phase: critical
+    T: 32.938
+    p: 1.2838e+06
+    rho: 31.36
+    u: 3.055625e+05
+    s: 1.2536e+04
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 18.0
+    p: 4.807e+04
+    rho: 73.20644216691069
+    u: 2.94433638e+04
+    s: 1856.0
+    tolMod: 10.0
+  - phase: liquid
+    T: 26.0
+    p: 4.029e+05
+    rho: 62.849600905034244
+    u: 1.147894581e+05
+    s: 5740.0
+    tolMod: 10.0
+  - phase: vapor
+    T: 30.0
+    p: 8.214e+05
+    rho: 10.86130118388183
+    u: 4.11773702e+05
+    s: 1.7859e+04
+    tolMod: 10.0
+  - phase: super
+    T: 100.0
+    p: 2.0e+05
+    rho: 0.485201358563804
+    u: 9.861e+05
+    s: 3.9869e+04
+    tolMod: 1.0
+  - phase: super
+    T: 200.0
+    p: 2.0e+07
+    rho: 20.855057351407716
+    u: 2.0569e+06
+    s: 3.1274e+04
+    tolMod: 1.0
+  - phase: super
+    T: 300.0
+    p: 5.0e+05
+    rho: 0.40290088638195
+    u: 3.2706e+06
+    s: 5.3143e+04
+    tolMod: 1.0
+  - phase: super
+    T: 600.0
+    p: 1.0e+06
+    rho: 0.4027386226339106
+    u: 6.4054e+06
+    s: 6.0398e+04
+    tolMod: 1.0
+  - phase: super
+    T: 800.0
+    p: 4.0e+06
+    rho: 1.2006243246488175
+    u: 8.5084e+06
+    s: 5.889e+04
+    tolMod: 1.0
+methane:
+  reference:
+    phase: critical
+    T: 190.555
+    p: 4.5988e+06
+    rho: 160.43
+    u: 4.619445384279748e+05
+    s: 3285.2999999999997
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 100.0
+    p: 5.0e+05
+    rho: 439.39
+    u: 3.0512058763285466e+04
+    s: 320.6
+    tolMod: 1.0
+  - phase: liquid
+    T: 140.0
+    p: 2.0e+06
+    rho: 379.51
+    u: 1.7021004663908723e+05
+    s: 1496.3
+    tolMod: 1.0
+  - phase: vapor
+    T: 150.0
+    p: 2.0e+05
+    rho: 2.651113467656416
+    u: 5.8528e+05
+    s: 5543.5
+    tolMod: 1.0
+  - phase: vapor
+    T: 160.0
+    p: 1.594e+06
+    rho: 25.4323499491353
+    u: 5.6528392e+05
+    s: 4364.8
+    tolMod: 10.0
+  - phase: vapor
+    T: 175.0
+    p: 1.0e+06
+    rho: 12.25940909648155
+    u: 6.1098e+05
+    s: 4955.8
+    tolMod: 1.0
+  - phase: super
+    T: 200.0
+    p: 2.0e+05
+    rho: 1.9542700801250732
+    u: 6.6503e+05
+    s: 6157.4
+    tolMod: 1.0
+  - phase: super
+    T: 300.0
+    p: 5.0e+05
+    rho: 3.243593902043464
+    u: 8.2672e+05
+    s: 6551.3
+    tolMod: 1.0
+nitrogen:
+  reference:
+    phase: critical
+    T: 126.2
+    p: 3.4e+06
+    rho: 314.03
+    u: 1.6995300894818967e+05
+    s: 1790.3
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 80.0
+    p: 1.37e+05
+    rho: 796.1783439490446
+    u: 3.3327928e+04
+    s: 466.8
+    tolMod: 10.0
+  - phase: vapor
+    T: 110.0
+    p: 1.467e+06
+    rho: 62.421972534332085
+    u: 2.1277866e+05
+    s: 2389.6000000000004
+    tolMod: 10.0
+  - phase: super
+    T: 200.0
+    p: 5.0e+05
+    rho: 8.517887563884157
+    u: 2.9635e+05
+    s: 3501.9
+    tolMod: 1.0
+  - phase: super
+    T: 300.0
+    p: 1.0e+07
+    rho: 111.73184357541899
+    u: 3.5228e+05
+    s: 2979.7
+    tolMod: 1.0
+  - phase: super
+    T: 500.0
+    p: 5.0e+06
+    rho: 32.99241174529858
+    u: 5.1693e+05
+    s: 3772.2000000000003
+    tolMod: 1.0
+  - phase: super
+    T: 600.0
+    p: 1.0e+08
+    rho: 362.3188405797102
+    u: 5.5154e+05
+    s: 3020.7999999999997
+    tolMod: 1.0
+oxygen:
+  reference:
+    phase: critical
+    T: 154.581
+    p: 5.0429e+06
+    rho: 436.15
+    u: 2.149676934540869e+05
+    s: 2108.0
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 80.0
+    p: 3.009e+04
+    rho: 1190.4761904761904
+    u: 4.25347244e+04
+    s: 640.5
+    tolMod: 10.0
+  - phase: liquid
+    T: 125.0
+    p: 1.351e+06
+    rho: 939.8496240601503
+    u: 1.21802536e+05
+    s: 1423.6
+    tolMod: 10.0
+  - phase: vapor
+    T: 145.0
+    p: 3.448e+06
+    rho: 154.8467017652524
+    u: 2.54182816e+05
+    s: 2485.2
+    tolMod: 10.0
+  - phase: super
+    T: 200.0
+    p: 5.0e+04
+    rho: 0.9633911368015414
+    u: 3.2275e+05
+    s: 4127.5
+    tolMod: 1.0
+  - phase: super
+    T: 300.0
+    p: 1.0e+06
+    rho: 12.90489095367144
+    u: 3.8627e+05
+    s: 3713.5
+    tolMod: 1.0
+  - phase: super
+    T: 600.0
+    p: 2.0e+05
+    rho: 1.2823800974608874
+    u: 5.9742e+05
+    s: 4798.2
+    tolMod: 1.0
+  - phase: super
+    T: 800.0
+    p: 5.0e+06
+    rho: 23.78686964795433
+    u: 7.508e+05
+    s: 4257.1
+    tolMod: 1.0
+water:
+  reference:
+    phase: critical
+    T: 647.286
+    p: 2.2089e+07
+    rho: 317.0
+    u: 2.0291186119873817e+06
+    s: 4428.9
+    tolMod: 1.0
+  states:
+  - phase: liquid
+    T: 295.0
+    p: 2620.0
+    rho: 997.5062344139652
+    u: 9.069737345e+04
+    s: 319.29999999999995
+    tolMod: 10.0
+  - phase: vapor
+    T: 315.0
+    p: 8142.999999999999
+    rho: 0.056179775280898875
+    u: 2.4321546e+06
+    s: 8221.6
+    tolMod: 10.0
+  - phase: liquid
+    T: 440.0
+    p: 7.332e+05
+    rho: 900.9009009009009
+    u: 7.04186148e+05
+    s: 2009.6
+    tolMod: 10.0
+  - phase: vapor
+    T: 510.0
+    p: 3.163e+06
+    rho: 15.815277558121146
+    u: 2.60360351e+06
+    s: 6165.2
+    tolMod: 10.0
+  - phase: vapor
+    T: 400.0
+    p: 4000.0
+    rho: 0.021677866897897247
+    u: 2.55428e+06
+    s: 9003.5
+    tolMod: 1.0
+  - phase: vapor
+    T: 500.0
+    p: 1.0e+06
+    rho: 4.533091568449683
+    u: 2.6696e+06
+    s: 6822.3
+    tolMod: 1.0
+  - phase: super
+    T: 800.0
+    p: 1.0e+04
+    rho: 0.027085590465872156
+    u: 3.1768e+06
+    s: 9969.900000000001
+    tolMod: 1.0
+  - phase: super
+    T: 900.0
+    p: 7.0e+05
+    rho: 1.6900456312320433
+    u: 3.34521e+06
+    s: 8262.1
+    tolMod: 1.0
+  - phase: super
+    T: 1000.0
+    p: 3.0e+07
+    rho: 70.37297677691767
+    u: 3.3953e+06
+    s: 6637.3
+    tolMod: 1.0
+  - phase: liquid
+    T: 500.0
+    p: 3.0e+06
+    rho: 832.04
+    u: 9.720744041151868e+05
+    s: 2580.4900000000002
+    tolMod: 1.0
