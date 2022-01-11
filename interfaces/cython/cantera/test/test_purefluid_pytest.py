@@ -419,24 +419,32 @@ def test_water_iapws():
         w.TP = 500, ct.one_atm
 
 
-@pytest.fixture(scope="class", params=("HFC-134a", "heptane"))
+@pytest.fixture(scope="class", params=("HFC-134a", "heptane", "carbon-dioxide", "hydrogen", "nitrogen", "oxygen", "water"))
 def create_fluid(request):
     request.cls.fluid = ct.PureFluid("liquidvapor.yaml", request.param)
     from ruamel import yaml
     from .utilities import TEST_DATA_PATH
     reader = yaml.YAML(typ="safe")
-    request.cls.states = reader.load(
+    state_data = reader.load(
         TEST_DATA_PATH / "state-data.yaml"
     )[request.param]
+    request.cls.states = state_data["states"]
+    request.cls.reference_state = state_data["reference"]
+    request.cls.tol = reader.load(TEST_DATA_PATH / "tolerance-data.yaml")[request.param]
 
 @pytest.mark.usefixtures("create_fluid")
 class TestPureFluid:
+
+    def a(self, T, rho):
+        """ Helmholtz free energy """
+        self.fluid.TD = T, rho
+        return self.fluid.u - T * self.fluid.s
 
     def test_has_phase_transition(self):
         assert self.fluid.has_phase_transition
 
     def test_consistency_temperature(self):
-        for state in self.states["states"]:
+        for state in self.states:
             dT = 2e-5 * state["T"]
             self.fluid.TD = state["T"] - dT, state["rho"]
             s1 = self.fluid.s
@@ -448,4 +456,71 @@ class TestPureFluid:
             # At constant volume, dU = T dS
             assert np.isclose((u2-u1)/(s2-s1), state["T"])
 
+    def test_consistency_volume(self):
+        for state in self.states:
+            self.fluid.TD = state["T"], state["rho"]
+            p = self.fluid.P
+            V = 1.0 / state["rho"]
+            dV = 5e-6 * V 
+
+            a1 = self.a(state["T"], 1/(V-0.5*dV))
+            a2 = self.a(state["T"], 1/(V+0.5*dV))
+
+            # dP/drho is high for liquids, so relax tolerances
+            tol = 300*self.tol["dAdV"] if state["phase"] == "liquid" else self.tol["dAdV"]
+
+            # At constant temperature, dA = - p dV
+            assert np.isclose(-(a2-a1)/dV, p, rtol=tol)
+
+    def test_saturation(self):
+        for state in self.states:
+            if state["phase"] == "super":
+                continue
+
+            dT = 1e-6 * state["T"]
+            self.fluid.TQ = state["T"], 0
+            p1 = self.fluid.P
+            vf = 1.0 / self.fluid.density
+            hf = self.fluid.h
+            sf = self.fluid.s
+
+            self.fluid.TQ = state["T"] + dT, 0
+            p2 = self.fluid.P
+
+            self.fluid.TQ = state["T"], 1
+            vg = 1.0 / self.fluid.density
+            hg = self.fluid.h
+            sg = self.fluid.s
+
+            # Clausius-Clapeyron Relation
+            assert np.isclose((p2-p1)/dT, (hg-hf)/(state["T"] * (vg-vf)), rtol=self.tol["dPdT"])
+
+            # True for a change in state at constant pressure and temperature
+            assert np.isclose(hg-hf, state["T"] * (sg-sf), rtol=self.tol["hTs"])
+
+    def test_pressure(self):
+        for state in self.states:
+            self.fluid.TD = state["T"], state["rho"]
+            # dP/drho is high for liquids, so relax tolerances
+            tol = 50*self.tol["p"] if state["phase"] == "liquid" else self.tol["p"]
+            tol *= state["tolMod"]
+            assert np.isclose(self.fluid.P, state["p"], rtol=tol)
+
+    def test_internal_energy(self):
+        self.fluid.TD = self.reference_state["T"], self.reference_state["rho"]
+        u_0 = self.fluid.u
+        for state in self.states:
+            self.fluid.TD = state["T"], state["rho"]
+            assert np.isclose(self.fluid.u - u_0,
+                            state["u"] - self.reference_state["u"],
+                            rtol=self.tol["u"] * state["tolMod"])
+
+    def test_entropy(self):
+        self.fluid.TD = self.reference_state["T"], self.reference_state["rho"]
+        s_0 = self.fluid.s
+        for state in self.states:
+            self.fluid.TD = state["T"], state["rho"]
+            assert np.isclose(self.fluid.s - s_0,
+                            state["s"] - self.reference_state["s"],
+                            self.tol["s"] * state["tolMod"])
 

@@ -497,6 +497,7 @@ class PureFluidTestCases:
 
 from ruamel import yaml
 emitter = yaml.YAML()
+from pathlib import Path
 # Reference values for HFC134a taken from NIST Chemistry WebBook, which
 # implements the same EOS from Tillner-Roth and Baehr as Cantera, so close
 # agreement is expected.
@@ -513,9 +514,9 @@ class HFC134a(PureFluidTestCases, utilities.CanteraTest):
     def __init__(self, *args, **kwargs):
         refState = StateData('critical', 374.21, 4.05928,
                              rho=511.900, u=381.70937, s=1.5620991)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"HFC-134a": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
+        if not Path("tolerance-data.yaml").exists() and not "HFC-134a" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"HFC-134a": Tolerances().__dict__}, dest)
         PureFluidTestCases.__init__(self, 'hfc134a', refState)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
@@ -543,9 +544,9 @@ class CarbonDioxide(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 304.21, 7.3834,
                              rho=464.0, h=257.31, s=0.9312)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"carbon-dioxide": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
+        if not "carbon-dioxide" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"carbon-dioxide": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'carbondioxide', refState, tols)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
@@ -563,9 +564,9 @@ class Heptane(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 537.68, 2.6199,
                              rho=197.60, h=747.84, s=1.7456)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"heptane": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
+        if not "heptane" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"heptane": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'heptane', refState, tols)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
@@ -586,9 +587,9 @@ class Hydrogen(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 32.938, 1.2838,
                              rho=31.36, h=346.5, s=12.536)
         tols = Tolerances(2e-3, 2e-3, 2e-3, 2e-4)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"hydrogen": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
+        if not "hydrogen" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"hydrogen": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'hydrogen', refState, tols)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
@@ -607,9 +608,9 @@ class Methane(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 190.555, 4.5988,
                              rho=160.43, h=490.61, s=3.2853)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"methane": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
+        if not "methane" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"methane": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'methane', refState, tols)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
@@ -627,10 +628,10 @@ class Nitrogen(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 126.200, 3.400,
                              rho=314.03, h=180.78, s=1.7903)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
+        if not "nitrogen" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"nitrogen": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'nitrogen', refState, tols)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"nitrogen": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
 
@@ -649,10 +650,10 @@ class Oxygen(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 154.581, 5.0429,
                              rho=436.15, h=226.53, s=2.1080)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
+        if not "oxygen" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"oxygen": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'oxygen', refState, tols)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"oxygen": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
 
@@ -674,10 +675,10 @@ class Water(PureFluidTestCases, utilities.CanteraTest):
         refState = StateData('critical', 647.286, 22.089,
                              rho=317.0, h=2098.8, s=4.4289)
         tols = Tolerances(2e-3, 2e-3, 2e-3)
+        if not "water" in Path("tolerance-data.yaml").read_text():
+            with open("tolerance-data.yaml", "a") as dest:
+                emitter.dump({"water": tols.__dict__}, dest)
         PureFluidTestCases.__init__(self, 'water', refState, tols)
-        with open("state-data.yaml", "a") as dest:
-            emitter.dump({"water": {"reference": refState.__dict__, "states":
-                                       list(s.__dict__ for s in self.states)}}, dest)
         utilities.CanteraTest.__init__(self, *args, **kwargs)
 
 

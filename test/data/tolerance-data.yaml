@@ -1,0 +1,64 @@
+HFC-134a:
+  p: 2.0e-05 
+  u: 2.0e-06 
+  s: 2.0e-05
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+carbon-dioxide:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+heptane:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+hydrogen:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-04
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+methane:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+nitrogen:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+oxygen:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
+water:
+  p: 2.0e-03
+  u: 2.0e-03
+  s: 2.0e-03
+  dUdS: 2.0e-06
+  dAdV: 2.0e-06
+  dPdT: 2.0e-04
+  hTs: 2.0e-04
