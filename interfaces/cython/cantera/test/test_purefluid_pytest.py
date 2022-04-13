@@ -1,5 +1,4 @@
 import pytest
-import math
 import cantera as ct
 from itertools import permutations
 import numpy as np
@@ -461,7 +460,7 @@ class TestPureFluid:
             self.fluid.TD = state["T"], state["rho"]
             p = self.fluid.P
             V = 1.0 / state["rho"]
-            dV = 5e-6 * V 
+            dV = 5e-6 * V
 
             a1 = self.a(state["T"], 1/(V-0.5*dV))
             a2 = self.a(state["T"], 1/(V+0.5*dV))
@@ -523,4 +522,3 @@ class TestPureFluid:
             assert np.isclose(self.fluid.s - s_0,
                             state["s"] - self.reference_state["s"],
                             self.tol["s"] * state["tolMod"])
-
