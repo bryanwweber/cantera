@@ -73,8 +73,31 @@ import textwrap
 from os.path import join as pjoin
 from pkg_resources import parse_version
 import SCons
+from typing import TYPE_CHECKING
 
-# ensure that Python version is sufficient for build process
+if TYPE_CHECKING:
+    from out.SCons.Variables.PathVariable import PathVariable
+    from out.SCons.Script.Main import AddOption, GetOption
+    from out.SCons.Script.SConscript import SConsEnvironment as Environment
+    Dir = Environment.Dir
+    Copy = Environment.Copy
+    Alias = Environment.Alias
+    Variables = Environment.Variables
+    Configure = Environment.Configure
+    Export = Environment.Export
+    VariantDir = Environment.VariantDir
+    SConscript = Environment.SConscript
+    Default = Environment.Default
+    FindInstalledFiles = Environment.FindInstalledFiles
+    Delete = Environment.Delete
+    Action = Environment.Action
+
+    from typing import List
+
+# Ensure that Python version is sufficient for build process
+# This must occur before importing buildutils due to the __future__ import in
+# buildutils so that a useful error message can be raised. Likewise, this file
+# cannot import __future__.annotations.
 python_version = "{v.major}.{v.minor}".format(v=sys.version_info)
 if parse_version(python_version) < parse_version(python_min_build_support):
     print(
@@ -83,6 +106,8 @@ if parse_version(python_version) < parse_version(python_min_build_support):
     sys.exit(1)
 
 from buildutils import *
+
+COMMAND_LINE_TARGETS: "List[str]"
 
 if not COMMAND_LINE_TARGETS:
     # Print usage help
@@ -867,6 +892,8 @@ if "sdist" in COMMAND_LINE_TARGETS:
     logger.info("'sdist' target was specified. Setting 'use_pch' to False.")
     env["use_pch"] = False
 
+ARGUMENTS: "List[str]"
+
 for arg in ARGUMENTS:
     if arg not in config:
         logger.error(f"Encountered unexpected command line option: '{arg}'")
@@ -904,6 +931,8 @@ elif env['env_vars']:
             if name == 'PATH':
                 env.AppendENVPath('PATH', os.environ['PATH'])
             else:
+                # Mypy doesn't like the next line because `name` is used in the cleaning
+                # and could be a pathlib.Path. It couldn't, but, oh well.
                 env['ENV'][name] = os.environ[name]
             if env['VERBOSE']:
                 print('Propagating environment variable {0}={1}'.format(name, env['ENV'][name]))
@@ -1821,13 +1850,13 @@ else:
 # *** Set options needed in config.h ***
 # **************************************
 
-configh = {}
+configh: dict[str, str | int | None] = {}
 
 configh['CANTERA_VERSION'] = quoted(env['cantera_version'])
 configh['CANTERA_SHORT_VERSION'] = quoted(env['cantera_short_version'])
-
+from typing import Any
 # Conditional defines
-def cdefine(definevar, configvar, comp=True, value=1):
+def cdefine(definevar: str, configvar: str, comp: Any = True, value: Any = 1) -> None:
     if env.get(configvar) == comp:
         configh[definevar] = value
     else:

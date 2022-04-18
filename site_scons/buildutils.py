@@ -28,8 +28,8 @@ __all__ = ("Option", "PathOption", "BoolOption", "EnumOption", "Configuration",
            "get_pip_install_location")
 
 if TYPE_CHECKING:
-    from typing import Iterable, TypeVar, Union, List, Dict, Tuple, Optional, \
-        Iterator, Sequence
+    from typing import Iterable, TypeVar, Union, List, Dict, Optional, \
+        Iterator, Sequence, MutableMapping, Any
     import SCons.Environment
     import SCons.Node.FS
     import SCons.Variables
@@ -52,20 +52,18 @@ class Option:
     def __init__(self,
             name: str,
             description: str,
-            default: "Union[str, bool, Dict[str, Union[str, bool]]]",
-            choices: "Optional[Union[Iterable[str], SCVariables]]" = None):
+            default: Union[str, bool, dict[str, Union[str, bool]]]) -> None:
         self.name = name
         self.description = Option._deblank(description)
         self.default = default
-        self.choices = choices
 
         self._wrapper = textwrap.TextWrapper(width=80)
         self.set_wrapper_indent(4)
 
     def to_scons(
             self,
-            env: "Optional[SCEnvironment]" = None
-            ) -> "Union[SCVariables, Tuple[str, str, Union[str, Dict[str, str]]]]":
+            env: SCEnvironment | None = None
+            ) -> tuple[str, str, Union[str, bool, dict[str, Union[str, bool]]]]:
         """Convert option to SCons variable"""
         default = self.default
         if isinstance(default, str) and "$" in default and env is not None:
@@ -73,28 +71,10 @@ class Option:
         elif not isinstance(default, (str, bool)):
             raise TypeError(f"Invalid defaults option with type '{type(default)}'")
 
-        if self.choices is None:
-            out = self.name, self.description, default
-        else:
-            out = self.name, self.description, default, self.choices
-
-        try:
-            if isinstance(self, BoolOption):
-                return BoolVariable(*out)
-            elif isinstance(self, PathOption):
-                return PathVariable(*out)
-            elif isinstance(self, EnumOption):
-                return EnumVariable(*out)
-            else:
-                return out
-
-        except Exception as err:
-            logger.error(
-                f"Error converting '{self.name}' to SCons variable:\n{out}")
-            raise err
+        return self.name, self.description, default
 
     @property
-    def wrapper(self) -> "textwrap.TextWrapper":
+    def wrapper(self) -> textwrap.TextWrapper:
         """Line wrapper for text output"""
         return self._wrapper
 
@@ -106,40 +86,46 @@ class Option:
     @staticmethod
     def _deblank(string: str) -> str:
         """Remove whitespace before and after line breaks"""
-        out = [s.strip() for s in string.split("\n")]
+        out = [s.strip() for s in string.splitlines()]
         if not len(out[-1]):
             out = out[:-1]
-        out = "\n".join(out)
-        return out
+        return "\n".join(out)
 
-    def _build_title(self, backticks: bool = True, indent: int = 3) -> str:
-        """Build title describing option and defaults"""
-        # First line: "* option-name: [ 'choice1' | 'choice2' ]"
+    def _build_title(self, rest_format: bool = True, indent: int = 3) -> str:
+        """Build title describing option and possible or example values.
 
-        def decorate(key: str, tick: bool = True) -> str:
-            key = f"'{key}'" if tick else key
-            return f"``{key}``" if backticks else key
-
-        # format choices
+        Example:
+        * option-name: [ 'choice1' | 'choice2' ]
+        * option-name: [ example-value ]
+        """
         if isinstance(self, PathOption):
-            choices = f"path/to/{self.name}"
-            choices = f"{decorate(choices, False)}"
-        elif isinstance(self.choices, (list, tuple)):
+            values = f"path/to/{self.name}"
+            if rest_format:
+                values = double_backticks(values)
+        elif isinstance(self, EnumOption):
             choices = list(self.choices)
             for yes_no in ["y", "n"]:
                 if yes_no in choices:
                     # ensure consistent order
                     choices.remove(yes_no)
                     choices = [yes_no] + choices
-            choices = " | ".join([decorate(c) for c in choices])
+            choices = [single_quoted(c) for c in choices]
+            if rest_format:
+                choices = [double_backticks(c) for c in choices]
+            values = " | ".join(choices)
         elif isinstance(self, BoolOption) or isinstance(self.default, bool):
-            choices = f"{decorate('yes')} | {decorate('no')}"
+            yes = single_quoted("yes")
+            no = single_quoted("no")
+            if rest_format:
+                yes = double_backticks(yes)
+                no = double_backticks(no)
+            values = f"{yes} | {no}"
         else:
-            choices = f"{decorate('string', False)}"
+            values = f"{double_backticks('string') if rest_format else 'string'}"
 
-        # assemble title
         bullet = f"{'*':<{indent}}"
-        return f"{bullet}{decorate(self.name, False)}: [ {choices} ]\n"
+        name = double_backticks(self.name) if rest_format else self.name
+        return f"{bullet}{name}: [ {values} ]\n"
 
     def _build_description(self, backticks: bool = True, indent: int = 3) -> str:
         """Assemble description block (help text)"""
@@ -248,7 +234,7 @@ class Option:
         if dev:
             tag += "-dev"
         out = f".. _{tag}:\n\n"
-        out += f"{self._build_title(backticks=True)}"
+        out += f"{self._build_title(rest_format=True)}"
         out += f"{self._build_description(indent=indent)}\n"
         out += f"{self._build_defaults(self.default, backticks=True)}"
 
@@ -257,7 +243,7 @@ class Option:
     def help(self, env: "Optional[SCEnvironment]" = None) -> str:
         """Convert option help for command line interface (CLI) output"""
         # assemble output
-        out = f"{self._build_title(backticks=False, indent=2)}"
+        out = f"{self._build_title(rest_format=False, indent=2)}"
         out += self._build_description(backticks=False, indent=4)
         out += self._build_defaults(self.default, backticks=False, indent=2, hanging=2)
 
@@ -281,17 +267,31 @@ class Option:
 
 class PathOption(Option):
     """Object corresponding to SCons PathVariable"""
-    pass
+    def __init__(self, name, description, default, validator):
+        super().__init__(name, description, default)
+        self.validator = validator
+
+    def to_scons(self, env):
+        name, description, default = super().to_scons(env)
+        return PathVariable(name, description, default, self.validator)
 
 
 class BoolOption(Option):
     """Object corresponding to SCons BoolVariable"""
-    pass
+    def to_scons(self, env):
+        name, description, default = super().to_scons(env)
+        return BoolVariable(name, description, default)
 
 
 class EnumOption(Option):
     """Object corresponding to SCons EnumVariable"""
-    pass
+    def __init__(self, name, description, default, choices):
+        super().__init__(name, description, default)
+        self.choices = choices
+
+    def to_scons(self, env):
+        name, description, default = super().to_scons(env)
+        return EnumVariable(name, description, default, self.choices)
 
 
 class Configuration:
@@ -386,7 +386,7 @@ class Configuration:
     def to_scons(
             self,
             keys: "Union[str, Sequence[str]]" = "",
-            env: "Optional[SCEnvironment]" = None
+            env: "Optional[SCEnvironment]" = None,
         ) -> "List[SCVariables]":
         """
         Convert options to SCons variables.
@@ -1079,6 +1079,21 @@ def add_RegressionTest(env: "SCEnvironment") -> None:
 def quoted(s: str) -> str:
     """Return the given string wrapped in double quotes."""
     return f'"{s}"'
+
+
+def single_quoted(s: str) -> str:
+    """Return the given string wrapped in single quotes."""
+    return f"'{s}'"
+
+
+def double_backticks(s: str) -> str:
+    """Return the given string wrapped in double backticks."""
+    return f"``{s}``"
+
+
+def backticks(s: str) -> str:
+    """Return the given string wrapped in single backticks."""
+    return f"`{s}`"
 
 
 def multi_glob(env: "SCEnvironment", subdir: str, *args: str):
