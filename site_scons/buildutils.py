@@ -453,10 +453,10 @@ class LevelAdapter(logging.LoggerAdapter):
        >>> logger.error("Message", print_level=False)
        Message
     """
-    def __init__(self, logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
 
-    def process(self, msg, kwargs):
+    def process(self, msg: str, kwargs: MutableMapping[str, Any]) -> tuple[str, MutableMapping[str, Any]]:
         """Pop the value of ``print_level`` into the ``extra`` dictionary.
 
         Key-value pairs in the "extra" dictionary are set as attributes on the
@@ -541,20 +541,20 @@ class LevelFilter(logging.Filter):
 
 
 logging.setLogRecordFactory(BraceLogRecord)
-logger = logging.getLogger("cantera")
-logger.setLevel(logging.INFO)
+_logger = logging.getLogger("cantera")
+_logger.setLevel(logging.INFO)
 f = OutputFormatter()
 stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setFormatter(f)
 stdout_handler.addFilter(LevelFilter(logging.DEBUG, logging.ERROR))
-logger.addHandler(stdout_handler)
+_logger.addHandler(stdout_handler)
 
 stderr_handler = logging.StreamHandler(sys.stderr)
 stderr_handler.setFormatter(f)
 stderr_handler.addFilter(LevelFilter(logging.ERROR, logging.CRITICAL + 1))
-logger.addHandler(stderr_handler)
+_logger.addHandler(stderr_handler)
 
-logger = LevelAdapter(logger)
+logger = LevelAdapter(_logger)
 
 
 class TestResult(enum.IntEnum):
