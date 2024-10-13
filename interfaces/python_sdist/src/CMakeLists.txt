@@ -40,11 +40,11 @@ FetchContent_Declare(
   FIND_PACKAGE_ARGS NAMES fmt GLOBAL
 )
 
-set(HIGHFIVE_VERSION 2.9.0)
+set(HIGHFIVE_VERSION 2.10.0)
 FetchContent_Declare(
   HighFive
   URL https://github.com/BlueBrain/HighFive/archive/refs/tags/v${HIGHFIVE_VERSION}.tar.gz
-  URL_HASH SHA256=6301def8ceb9f4d7a595988612db288b448a3c0546f6c83417dab38c64994d7e
+  URL_HASH SHA256=c29e8e1520e7298fabb26545f804e35bb3af257005c1c2df62e39986458d7c38
   # FIND_PACKAGE_ARGS has to be the last thing in this call because it greedily takes
   # everything after it to pass to `find_package()`
   FIND_PACKAGE_ARGS NAMES HighFive
@@ -96,6 +96,10 @@ file(GLOB_RECURSE CT_LIB_SOURCES "*.cpp")
 list(FILTER CT_LIB_SOURCES EXCLUDE REGEX "extensions/.*")
 list(APPEND CT_LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/extensions/canteraShared.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/extensions/pythonShim.cpp")
 
+set(BLA_VENDOR OpenBLAS)
+find_package(LAPACK REQUIRED)
+find_package(BLAS REQUIRED)
+
 add_library(cantera_lib STATIC ${CT_LIB_SOURCES})
 target_include_directories(cantera_lib PRIVATE "../include" "${Python_INCLUDE_DIRS}" "${Boost_INCLUDE_DIRS}")
 set_target_properties(cantera_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -104,6 +108,8 @@ target_link_libraries(cantera_lib PUBLIC
     fmt::fmt
     Eigen3::Eigen
     HighFive
+    BLAS::BLAS
+    LAPACK::LAPACK
     SUNDIALS::core_static
     SUNDIALS::nvecserial_static
     SUNDIALS::cvodes_static
@@ -111,7 +117,9 @@ target_link_libraries(cantera_lib PUBLIC
     SUNDIALS::sunmatrixband_static
     SUNDIALS::sunmatrixdense_static
     SUNDIALS::sunmatrixsparse_static
-    SUNDIALS::sunlinsoldense_static
-    SUNDIALS::sunlinsolband_static
+    # SUNDIALS::sunlinsoldense_static
+    SUNDIALS::sunlinsollapackdense_static
+    # SUNDIALS::sunlinsolband_static
+    SUNDIALS::sunlinsollapackband_static
     SUNDIALS::sunlinsolspgmr_static
     SUNDIALS::sunnonlinsolnewton_static)
